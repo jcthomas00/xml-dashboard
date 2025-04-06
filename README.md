@@ -22,8 +22,7 @@ A React-based dashboard for visualizing Employee Assistance Program (EAP) data f
 ```
 uteap-dashboard/
 ├── public/
-│   ├── index.html
-│   └── UTMB.xml          # Sample data file
+│   └── index.html
 ├── src/
 │   ├── components/
 │   │   ├── Dashboard.tsx         # Main dashboard component
@@ -60,8 +59,6 @@ cd xml-dashboard
 ```bash
 npm install
 ```
-
-3. Place your UTMB.xml file in the `public` directory.
 
 ## Running the Application
 
@@ -111,7 +108,7 @@ Provides:
 
 ## Data Format
 
-The application expects an XML file named `UTMB.xml` in the following format:
+The application expects XML data in the following format:
 
 ```xml
 <data>
