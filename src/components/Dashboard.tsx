@@ -5,6 +5,17 @@ import PDFDownloadWrapper from './PDFDownloadWrapper';
 import FileUpload from './FileUpload';
 import { parseXMLData } from '../utils/xmlParser';
 import '../styles/Dashboard.css';
+import { Doughnut, Line } from 'react-chartjs-2';
+import Chart from 'chart.js/auto';
+import { CategoryScale } from 'chart.js';
+
+// Register the CategoryScale
+Chart.register(CategoryScale);
+
+interface EducationItem {
+  label: string;
+  value: number;
+}
 
 const Dashboard: React.FC = () => {
   const [data, setData] = useState<any>(null);
@@ -291,6 +302,38 @@ const Dashboard: React.FC = () => {
     };
   }, [data?.age]);
 
+  const workStatusData = useMemo(() => {
+    if (!data?.workStatus) return undefined;
+
+    const workStatusEntries = Object.entries(data.workStatus) as [string, { yd: number }][];
+    const filteredData = workStatusEntries
+      .filter(([_, value]) => value.yd !== 0)
+      .sort((a, b) => b[1].yd - a[1].yd);
+
+    return {
+      labels: filteredData.map(([key]) => key),
+      datasets: [{
+        label: 'Work Status Distribution',
+        data: filteredData.map(([_, value]) => value.yd),
+        backgroundColor: [
+          'rgba(54, 162, 235, 0.6)',
+          'rgba(255, 99, 132, 0.6)',
+          'rgba(255, 206, 86, 0.6)',
+          'rgba(75, 192, 192, 0.6)',
+          'rgba(153, 102, 255, 0.6)',
+        ],
+        borderColor: [
+          'rgba(54, 162, 235, 1)',
+          'rgba(255, 99, 132, 1)',
+          'rgba(255, 206, 86, 1)',
+          'rgba(75, 192, 192, 1)',
+          'rgba(153, 102, 255, 1)',
+        ],
+        borderWidth: 1,
+      }],
+    };
+  }, [data?.workStatus]);
+
   // Calculate totals for each section
   const totalGender = useMemo(() => {
     if (!genderData?.datasets?.[0]?.data) return 0;
@@ -312,6 +355,14 @@ const Dashboard: React.FC = () => {
     return referredByData.datasets[0].data.reduce((sum, count) => sum + count, 0);
   }, [referredByData]);
 
+  const totalWorkStatus = useMemo(() => {
+    if (!data?.workStatus) return 0;
+    return Object.values(data.workStatus).reduce<number>((sum, item) => {
+      const { yd } = item as { yd: number };
+      return sum + yd;
+    }, 0);
+  }, [data?.workStatus]);
+
   // Group presenting issues by category
   const groupedIssues = useMemo(() => {
     if (!data?.presentingIssues) return {};
@@ -328,6 +379,20 @@ const Dashboard: React.FC = () => {
       return acc;
     }, {});
   }, [data?.presentingIssues]);
+
+  // Add education data processing
+  const educationData = useMemo<EducationItem[]>(() => {
+    if (!data?.education) return [];
+    return data.education.map((item: { label: string; yd: number }) => ({
+      label: item.label,
+      value: item.yd
+    }));
+  }, [data?.education]);
+
+  const totalEducation = useMemo(() => {
+    if (!educationData.length) return 0;
+    return educationData.reduce((sum: number, item: EducationItem) => sum + item.value, 0);
+  }, [educationData]);
 
   if (loading && !data) {
     return (
@@ -417,13 +482,13 @@ const Dashboard: React.FC = () => {
                   maintainAspectRatio: false,
                   plugins: {
                     legend: {
-                      display: false
-                    },
-                    title: {
-                      display: true,
-                      text: 'Gender Distribution',
-                      font: {
-                        size: 16
+                      position: 'bottom',
+                      labels: {
+                        boxWidth: 20,
+                        padding: 15,
+                        font: {
+                          size: 12
+                        }
                       }
                     }
                   }
@@ -444,7 +509,7 @@ const Dashboard: React.FC = () => {
                     <tr key={label}>
                       <td>{label}</td>
                       <td>{genderData?.datasets?.[0]?.data?.[index] || 0}</td>
-                      <td>{((genderData?.datasets?.[0]?.data?.[index] || 0) / totalGender * 100).toFixed(1)}%</td>
+                      <td>{((genderData?.datasets?.[0]?.data?.[index] || 0) / totalEducation * 100).toFixed(1)}%</td>
                     </tr>
                   ))}
                 </tbody>
@@ -616,13 +681,13 @@ const Dashboard: React.FC = () => {
                   maintainAspectRatio: false,
                   plugins: {
                     legend: {
-                      display: false
-                    },
-                    title: {
-                      display: true,
-                      text: 'Referred By',
-                      font: {
-                        size: 16
+                      position: 'bottom',
+                      labels: {
+                        boxWidth: 20,
+                        padding: 15,
+                        font: {
+                          size: 12
+                        }
                       }
                     }
                   }
@@ -651,6 +716,115 @@ const Dashboard: React.FC = () => {
             </div>
           </div>
         </div>
+
+        <div className="chart-section">
+          <h2>Work Status</h2>
+          <div className="chart-section-content">
+            <div className="chart-card">
+              {workStatusData && (
+                <ChartRenderer
+                  type="doughnut"
+                  data={workStatusData}
+                  options={{
+                    plugins: {
+                      legend: {
+                        position: 'bottom',
+                        labels: {
+                          boxWidth: 20,
+                          padding: 15,
+                          font: {
+                            size: 12
+                          }
+                        }
+                      },
+                    }
+                  }}
+                />
+              )}
+            </div>
+            <div className="data-table">
+              {data?.workStatus && (
+                <div className="data-table">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th>Status</th>
+                        <th>Percentage</th>
+                        <th>Count</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {Object.entries(data.workStatus)
+                        .filter(([_, value]) => (value as { yd: number }).yd !== 0)
+                        .sort((a, b) => (b[1] as { yd: number }).yd - (a[1] as { yd: number }).yd)
+                        .map(([key, value]) => (
+                          <tr key={key}>
+                            <td>{key}</td>
+                            <td>{(value as { ptd: string }).ptd}</td>
+                            <td>{(value as { yd: number }).yd}</td>
+                          </tr>
+                        ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Education Section */}
+        {data?.education && (
+          <div className="chart-section">
+            <h3>Education</h3>
+            <div className="chart-section-content">
+              <div className="chart-card">
+                <Doughnut
+                  data={{
+                    labels: educationData.map(item => item.label),
+                    datasets: [{
+                      data: educationData.map(item => item.value),
+                      backgroundColor: [
+                        '#FF6384',
+                        '#36A2EB',
+                        '#FFCE56',
+                        '#4BC0C0',
+                        '#9966FF',
+                        '#FF9F40',
+                        '#FF6384',
+                        '#36A2EB',
+                        '#FFCE56'
+                      ]
+                    }]
+                  }}
+                  options={{
+                    responsive: true,
+                    maintainAspectRatio: false,
+                  }}
+                />
+              </div>
+              <div className="data-table">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Education Level</th>
+                      <th>Count</th>
+                      <th>Percentage</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {educationData.map((item: EducationItem, index: number) => (
+                      <tr key={index}>
+                        <td>{item.label}</td>
+                        <td>{item.value}</td>
+                        <td>{((item.value / totalEducation) * 100).toFixed(1)}%</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
