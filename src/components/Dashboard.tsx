@@ -86,6 +86,16 @@ interface ReduceCallback<T> {
   (accumulator: T, currentValue: ChartDataItem): T;
 }
 
+interface ChartVisibility {
+  gender: boolean;
+  division: boolean;
+  age: boolean;
+  presentingIssues: boolean;
+  referredBy: boolean;
+  workStatus: boolean;
+  education: boolean;
+}
+
 const Dashboard: React.FC = () => {
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState<boolean>(true);
@@ -98,6 +108,15 @@ const Dashboard: React.FC = () => {
     referredBy: true,
     workStatus: true,
     education: true
+  });
+  const [chartVisibility, setChartVisibility] = useState<ChartVisibility>({
+    gender: false,
+    division: false,
+    age: false,
+    presentingIssues: false,
+    referredBy: false,
+    workStatus: false,
+    education: false
   });
 
   const handleFileUpload = async (file: File) => {
@@ -473,6 +492,13 @@ const Dashboard: React.FC = () => {
     return educationData.reduce((sum: number, item: EducationItem) => sum + item.yd, 0);
   }, [educationData]);
 
+  const handleVisibilityChange = (chart: keyof ChartVisibility) => {
+    setChartVisibility(prev => ({
+      ...prev,
+      [chart]: !prev[chart]
+    }));
+  };
+
   if (loading && !data) {
     return (
       <div className="dashboard-container">
@@ -544,8 +570,21 @@ const Dashboard: React.FC = () => {
       </div>
 
       <div className="charts-grid">
-        <div className="chart-section">
-          <h3>Gender Distribution</h3>
+        <div className={`chart-section ${chartVisibility.gender ? 'hidden' : ''}`}>
+          <div className="chart-section-header">
+            <h3>Gender Distribution</h3>
+            <div className="switch-container">
+              <span className="switch-label">Hide</span>
+              <label className="switch">
+                <input
+                  type="checkbox"
+                  checked={chartVisibility.gender}
+                  onChange={() => handleVisibilityChange('gender')}
+                />
+                <span className="slider"></span>
+              </label>
+            </div>
+          </div>
           <div className="chart-section-content">
             <div id="gender-chart" className="chart-card">
               <ChartRenderer
@@ -592,8 +631,21 @@ const Dashboard: React.FC = () => {
           </div>
         </div>
 
-        <div className="chart-section">
-          <h3>Division Distribution</h3>
+        <div className={`chart-section ${chartVisibility.division ? 'hidden' : ''}`}>
+          <div className="chart-section-header">
+            <h3>Division Distribution</h3>
+            <div className="switch-container">
+              <span className="switch-label">Hide</span>
+              <label className="switch">
+                <input
+                  type="checkbox"
+                  checked={chartVisibility.division}
+                  onChange={() => handleVisibilityChange('division')}
+                />
+                <span className="slider"></span>
+              </label>
+            </div>
+          </div>
           <div className="chart-section-content">
             <div id="division-chart" className="chart-card">
               <ChartRenderer
@@ -628,8 +680,21 @@ const Dashboard: React.FC = () => {
           </div>
         </div>
 
-        <div className="chart-section">
-          <h3>Presenting Issues</h3>
+        <div className={`chart-section ${chartVisibility.presentingIssues ? 'hidden' : ''}`}>
+          <div className="chart-section-header">
+            <h3>Presenting Issues</h3>
+            <div className="switch-container">
+              <span className="switch-label">Hide</span>
+              <label className="switch">
+                <input
+                  type="checkbox"
+                  checked={chartVisibility.presentingIssues}
+                  onChange={() => handleVisibilityChange('presentingIssues')}
+                />
+                <span className="slider"></span>
+              </label>
+            </div>
+          </div>
           <div className="chart-section-content">
             <div className="chart-card">
               <ChartRenderer
@@ -707,8 +772,21 @@ const Dashboard: React.FC = () => {
           </div>
         </div>
 
-        <div className="chart-section">
-          <h3>Age Distribution</h3>
+        <div className={`chart-section ${chartVisibility.age ? 'hidden' : ''}`}>
+          <div className="chart-section-header">
+            <h3>Age Distribution</h3>
+            <div className="switch-container">
+              <span className="switch-label">Hide</span>
+              <label className="switch">
+                <input
+                  type="checkbox"
+                  checked={chartVisibility.age}
+                  onChange={() => handleVisibilityChange('age')}
+                />
+                <span className="slider"></span>
+              </label>
+            </div>
+          </div>
           <div className="chart-section-content">
             <div id="age-chart" className="chart-card">
               <ChartRenderer
@@ -743,8 +821,21 @@ const Dashboard: React.FC = () => {
           </div>
         </div>
 
-        <div className="chart-section">
-          <h3>Referred By</h3>
+        <div className={`chart-section ${chartVisibility.referredBy ? 'hidden' : ''}`}>
+          <div className="chart-section-header">
+            <h3>Referred By</h3>
+            <div className="switch-container">
+              <span className="switch-label">Hide</span>
+              <label className="switch">
+                <input
+                  type="checkbox"
+                  checked={chartVisibility.referredBy}
+                  onChange={() => handleVisibilityChange('referredBy')}
+                />
+                <span className="slider"></span>
+              </label>
+            </div>
+          </div>
           <div className="chart-section-content">
             <div className="chart-card">
               <ChartRenderer
@@ -791,8 +882,21 @@ const Dashboard: React.FC = () => {
           </div>
         </div>
 
-        <div className="chart-section">
-          <h3>Work Status</h3>
+        <div className={`chart-section ${chartVisibility.workStatus ? 'hidden' : ''}`}>
+          <div className="chart-section-header">
+            <h3>Work Status</h3>
+            <div className="switch-container">
+              <span className="switch-label">Hide</span>
+              <label className="switch">
+                <input
+                  type="checkbox"
+                  checked={chartVisibility.workStatus}
+                  onChange={() => handleVisibilityChange('workStatus')}
+                />
+                <span className="slider"></span>
+              </label>
+            </div>
+          </div>
           <div className="chart-section-content">
             <div id="work-status-chart" className="chart-card">
               <ChartRenderer
@@ -846,56 +950,66 @@ const Dashboard: React.FC = () => {
           </div>
         </div>
 
-        {/* Education Section */}
-        {data?.education && (
-          <div className="chart-section">
+        <div className={`chart-section ${chartVisibility.education ? 'hidden' : ''}`}>
+          <div className="chart-section-header">
             <h3>Education</h3>
-            <div className="chart-section-content">
-              <div id="education-chart" className="chart-card">
-                <ChartRenderer
-                  type="doughnut"
-                  data={formatChartData(data?.education, 'pie')}
-                  options={{
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                      legend: {
-                        position: 'bottom',
-                        labels: {
-                          boxWidth: 20,
-                          padding: 15,
-                          font: {
-                            size: 12
-                          }
+            <div className="switch-container">
+              <span className="switch-label">Hide</span>
+              <label className="switch">
+                <input
+                  type="checkbox"
+                  checked={chartVisibility.education}
+                  onChange={() => handleVisibilityChange('education')}
+                />
+                <span className="slider"></span>
+              </label>
+            </div>
+          </div>
+          <div className="chart-section-content">
+            <div id="education-chart" className="chart-card">
+              <ChartRenderer
+                type="doughnut"
+                data={formatChartData(data?.education, 'pie')}
+                options={{
+                  responsive: true,
+                  maintainAspectRatio: false,
+                  plugins: {
+                    legend: {
+                      position: 'bottom',
+                      labels: {
+                        boxWidth: 20,
+                        padding: 15,
+                        font: {
+                          size: 12
                         }
                       }
                     }
-                  }}
-                />
-              </div>
-              <div className="data-table">
-                <table>
-                  <thead>
-                    <tr>
-                      <th>Education Level</th>
-                      <th>Count</th>
-                      <th>Percentage</th>
+                  }
+                }}
+              />
+            </div>
+            <div className="data-table">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Education Level</th>
+                    <th>Count</th>
+                    <th>Percentage</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {educationData.map((item: EducationItem, index: number) => (
+                    <tr key={index}>
+                      <td>{item.label}</td>
+                      <td>{item.yd}</td>
+                      <td>{((item.yd / totalEducation) * 100).toFixed(1)}%</td>
                     </tr>
-                  </thead>
-                  <tbody>
-                    {educationData.map((item: EducationItem, index: number) => (
-                      <tr key={index}>
-                        <td>{item.label}</td>
-                        <td>{item.yd}</td>
-                        <td>{((item.yd / totalEducation) * 100).toFixed(1)}%</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+                  ))}
+                </tbody>
+              </table>
             </div>
           </div>
-        )}
+        </div>
       </div>
     </div>
   );
