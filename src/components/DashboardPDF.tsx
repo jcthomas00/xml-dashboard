@@ -1,15 +1,28 @@
 import React from 'react';
-import { Document, Page, Text, View, StyleSheet, Font } from '@react-pdf/renderer';
+import { Document, Page, Text, View, StyleSheet, Font, Image } from '@react-pdf/renderer';
 import { Chart as ChartJS, ArcElement, Tooltip, Legend, CategoryScale, LinearScale, BarElement, Title } from 'chart.js';
 import { Pie, Bar } from 'react-chartjs-2';
 import { StatValue, DashboardData } from '../types/dashboard';
+import html2canvas from 'html2canvas';
+
+// Register Chart.js components
+ChartJS.register(ArcElement, Tooltip, Legend, CategoryScale, LinearScale, BarElement, Title);
 
 // Register fonts
 Font.register({
   family: 'Roboto',
   fonts: [
-    { src: 'https://fonts.gstatic.com/s/roboto/v30/KFOmCnqEu92Fr1Mu4mxK.ttf' },
-    { src: 'https://fonts.gstatic.com/s/roboto/v30/KFOlCnqEu92Fr1MmEU9fBBc4.ttf', fontWeight: 'bold' }
+    { src: 'https://cdnjs.cloudflare.com/ajax/libs/ink/3.1.10/fonts/Roboto/roboto-regular-webfont.ttf' },
+    { src: 'https://cdnjs.cloudflare.com/ajax/libs/ink/3.1.10/fonts/Roboto/roboto-bold-webfont.ttf', fontWeight: 'bold' }
+  ]
+});
+
+// Add fallback fonts
+Font.register({
+  family: 'Helvetica',
+  fonts: [
+    { src: 'https://cdnjs.cloudflare.com/ajax/libs/ink/3.1.10/fonts/Helvetica/helvetica-regular.ttf' },
+    { src: 'https://cdnjs.cloudflare.com/ajax/libs/ink/3.1.10/fonts/Helvetica/helvetica-bold.ttf', fontWeight: 'bold' }
   ]
 });
 
@@ -17,147 +30,170 @@ const styles = StyleSheet.create({
   page: {
     padding: 40,
     fontFamily: 'Helvetica',
-    fontSize: 12,
-    color: '#333333',
-  },
-  header: {
-    marginBottom: 30,
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    textAlign: 'center',
-    marginBottom: 10,
-    color: '#1a237e',
-  },
-  subtitle: {
-    fontSize: 14,
-    textAlign: 'center',
-    marginBottom: 20,
-    color: '#666666',
   },
   section: {
-    marginBottom: 25,
+    marginBottom: 20,
   },
   sectionTitle: {
     fontSize: 16,
     fontWeight: 'bold',
-    marginBottom: 15,
-    color: '#1a237e',
-    backgroundColor: '#e8eaf6',
-    padding: 8,
-    borderRadius: 4,
+    marginBottom: 10,
+  },
+  chartContainer: {
+    marginBottom: 20,
   },
   table: {
     display: 'flex',
     flexDirection: 'column',
     width: '100%',
-    marginTop: 10
   },
   tableRow: {
     flexDirection: 'row',
     borderBottomWidth: 1,
-    borderBottomColor: '#dddddd',
+    borderBottomColor: '#e0e0e0',
     borderBottomStyle: 'solid',
-    paddingVertical: 5
+    paddingVertical: 5,
   },
   tableHeader: {
     flexDirection: 'row',
     borderBottomWidth: 2,
-    borderBottomColor: '#333333',
+    borderBottomColor: '#000',
     borderBottomStyle: 'solid',
     paddingVertical: 5,
-    backgroundColor: '#f0f0f0'
-  },
-  tableCell: {
-    flex: 1,
-    padding: 5,
-    fontSize: 10
   },
   tableHeaderCell: {
     flex: 1,
-    padding: 5,
-    fontSize: 10,
-    fontWeight: 'bold'
+    fontWeight: 'bold',
+    fontSize: 12,
   },
-  statCard: {
-    backgroundColor: '#ffffff',
+  tableCell: {
+    flex: 1,
+    fontSize: 10,
+  },
+  statsContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 20,
+  },
+  statBox: {
+    width: '30%',
     padding: 10,
-    borderRadius: 5,
-    marginBottom: 10,
     borderWidth: 1,
-    borderColor: '#dddddd',
-    borderStyle: 'solid'
+    borderColor: '#e0e0e0',
+    borderStyle: 'solid',
   },
   statTitle: {
-    fontSize: 12,
-    color: '#666666',
-    marginBottom: 5
+    fontSize: 10,
+    color: '#666',
   },
   statValue: {
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: 'bold',
-    color: '#333333'
   },
-  footer: {
-    position: 'absolute',
-    bottom: 30,
-    left: 40,
-    right: 40,
-    textAlign: 'center',
-    color: '#666666',
-    fontSize: 10,
-    borderTopWidth: 1,
-    borderTopColor: '#eeeeee',
-    paddingTop: 10,
-  }
 });
 
 interface DashboardPDFProps {
   data: DashboardData;
+  trigger: boolean;
 }
 
-const DashboardPDF: React.FC<DashboardPDFProps> = ({ data }) => {
-  const currentDate = new Date().toLocaleDateString('en-US', {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric'
-  });
+const DashboardPDF: React.FC<DashboardPDFProps> = ({ data, trigger }) => {
+  const [chartImages, setChartImages] = React.useState<Record<string, string>>({});
 
-  if (!data) {
-    return (
-      <Document>
-        <Page size="A4" style={styles.page}>
-          <View style={styles.header}>
-            <Text style={styles.title}>EAP Dashboard Report</Text>
-            <Text style={styles.subtitle}>No data available</Text>
-          </View>
-          <Text style={styles.footer}>
-            UTMB Employee Assistance Program - Confidential Report
-          </Text>
-        </Page>
-      </Document>
-    );
-  }
+  React.useEffect(() => {
+    if (!trigger) return;
 
-  const { gender, division, presentingIssues, age, totalClients, activeCases, closedCases } = data;
+    const captureCharts = async () => {
+      // Wait for the next frame to ensure charts are rendered
+      await new Promise(resolve => requestAnimationFrame(resolve));
+      
+      const charts = {
+        gender: document.querySelector('#gender-chart canvas'),
+        division: document.querySelector('#division-chart canvas'),
+        age: document.querySelector('#age-chart canvas'),
+        workStatus: document.querySelector('#work-status-chart canvas'),
+        education: document.querySelector('#education-chart canvas'),
+        presentingIssues: document.querySelector('#presenting-issues-chart canvas'),
+      };
 
-  const renderTableRow = (key: string, value: StatValue) => {
-    return (
-      <View key={key} style={styles.tableRow}>
-        <Text style={styles.tableCell}>{key}</Text>
-        <Text style={styles.tableCell}>{value.ptd}</Text>
-        <Text style={styles.tableCell}>{value.ytd}</Text>
-      </View>
-    );
-  };
+      const images: Record<string, string> = {};
+      
+      for (const [key, element] of Object.entries(charts)) {
+        if (element) {
+          const canvas = element as HTMLCanvasElement;
+          
+          // Create a temporary container
+          const tempContainer = document.createElement('div');
+          tempContainer.style.position = 'fixed';
+          tempContainer.style.top = '0';
+          tempContainer.style.left = '0';
+          tempContainer.style.width = '100%';
+          tempContainer.style.height = '100%';
+          tempContainer.style.backgroundColor = 'white';
+          tempContainer.style.zIndex = '9999';
+          tempContainer.style.display = 'flex';
+          tempContainer.style.justifyContent = 'center';
+          tempContainer.style.alignItems = 'center';
+          
+          // Clone the canvas
+          const canvasClone = canvas.cloneNode(true) as HTMLCanvasElement;
+          canvasClone.style.width = '600px';
+          canvasClone.style.height = '400px';
+          canvasClone.style.backgroundColor = 'white';
+          
+          // Copy the canvas content
+          const ctx = canvasClone.getContext('2d');
+          if (ctx) {
+            ctx.drawImage(canvas, 0, 0);
+          }
+          
+          tempContainer.appendChild(canvasClone);
+          document.body.appendChild(tempContainer);
+          
+          try {
+            // Wait for the canvas to be fully rendered
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            
+            const imageCanvas = await html2canvas(canvasClone, {
+              scale: 2,
+              useCORS: true,
+              logging: false,
+              backgroundColor: '#ffffff'
+            });
+            
+            images[key] = imageCanvas.toDataURL('image/png');
+          } finally {
+            // Clean up
+            document.body.removeChild(tempContainer);
+          }
+        }
+      }
+      
+      setChartImages(images);
+    };
 
-  const renderSection = (title: string, data: Record<string, StatValue> | undefined | null, headerLabel: string) => {
+    captureCharts();
+  }, [trigger]);
+
+  const renderSection = (title: string, data: Record<string, StatValue> | undefined | null, headerLabel: string, chartKey?: string) => {
     if (!data) return null;
     
     return (
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>{title}</Text>
+        {chartKey && chartImages[chartKey] && (
+          <View style={styles.chartContainer}>
+            <Image 
+              src={chartImages[chartKey]} 
+              style={{ 
+                width: '100%',
+                height: 'auto',
+                maxHeight: 300,
+                objectFit: 'contain'
+              }} 
+            />
+          </View>
+        )}
         <View style={styles.table}>
           <View style={styles.tableHeader}>
             <Text style={styles.tableHeaderCell}>{headerLabel}</Text>
@@ -179,48 +215,28 @@ const DashboardPDF: React.FC<DashboardPDFProps> = ({ data }) => {
   return (
     <Document>
       <Page size="A4" style={styles.page}>
-        {/* Header */}
-        <View style={styles.header}>
-          <Text style={styles.title}>EAP Dashboard Report</Text>
-          <Text style={styles.subtitle}>Generated on {currentDate}</Text>
-        </View>
-
-        {/* Statistics Section */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Overview</Text>
-          <View style={{ flexDirection: 'row', justifyContent: 'space-between', flexWrap: 'wrap' }}>
-            <View style={[styles.statCard, { width: '48%', marginBottom: 10 }]}>
-              <Text style={styles.statTitle}>Total Cases</Text>
-              <Text style={styles.statValue}>{data?.totalCases || 0}</Text>
-            </View>
-            <View style={[styles.statCard, { width: '48%', marginBottom: 10 }]}>
-              <Text style={styles.statTitle}>EAP Cases</Text>
-              <Text style={styles.statValue}>{data?.caseTypes?.eap?.ytd || 0}</Text>
-            </View>
-            <View style={[styles.statCard, { width: '48%', marginBottom: 10 }]}>
-              <Text style={styles.statTitle}>Worklife Cases</Text>
-              <Text style={styles.statValue}>{data?.caseTypes?.worklife?.ytd || 0}</Text>
-            </View>
-            <View style={[styles.statCard, { width: '48%', marginBottom: 10 }]}>
-              <Text style={styles.statTitle}>Utilization Rate</Text>
-              <View style={{ marginTop: 5 }}>
-                <Text style={[styles.statValue, { fontSize: 14 }]}>Current: {data?.utilizationRate?.current || 0}%</Text>
-                <Text style={[styles.statValue, { fontSize: 14 }]}>Yearly: {data?.utilizationRate?.yearly || 0}%</Text>
-              </View>
-            </View>
+        <View style={styles.statsContainer}>
+          <View style={styles.statBox}>
+            <Text style={styles.statTitle}>Total Cases</Text>
+            <Text style={styles.statValue}>{data.totalCases}</Text>
+          </View>
+          <View style={styles.statBox}>
+            <Text style={styles.statTitle}>Active Cases</Text>
+            <Text style={styles.statValue}>{data.activeCases}</Text>
+          </View>
+          <View style={styles.statBox}>
+            <Text style={styles.statTitle}>Closed Cases</Text>
+            <Text style={styles.statValue}>{data.closedCases}</Text>
           </View>
         </View>
 
-        {/* Data Sections */}
-        {renderSection('Gender Distribution', gender, 'Gender')}
-        {renderSection('Division Distribution', division, 'Division')}
-        {renderSection('Presenting Issues', presentingIssues, 'Issue')}
-        {renderSection('Age Distribution', age, 'Age Range')}
-
-        {/* Footer */}
-        <Text style={styles.footer}>
-          UTMB Employee Assistance Program - Confidential Report
-        </Text>
+        {renderSection('Gender Distribution', data.gender, 'Gender', 'gender')}
+        {renderSection('Division Distribution', data.division, 'Division', 'division')}
+        {renderSection('Age Distribution', data.age, 'Age Range', 'age')}
+        {renderSection('Work Status', data.workStatus, 'Status', 'workStatus')}
+        {renderSection('Education', data.education, 'Level', 'education')}
+        {renderSection('Presenting Issues', data.presentingIssues, 'Issue', 'presentingIssues')}
+        {renderSection('Referred By', data.referredBy, 'Source')}
       </Page>
     </Document>
   );

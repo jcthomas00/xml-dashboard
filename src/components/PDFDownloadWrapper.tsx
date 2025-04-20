@@ -1,5 +1,6 @@
-import React, { useEffect } from 'react';
-import { PDFDownloadLink } from '@react-pdf/renderer';
+import React, { useState, useEffect } from 'react';
+import { PDFDownloadLink, BlobProviderParams } from '@react-pdf/renderer';
+import { toast } from 'react-hot-toast';
 
 // This wrapper component suppresses the React 18 warning from @react-pdf/renderer
 interface PDFDownloadWrapperProps {
@@ -8,28 +9,51 @@ interface PDFDownloadWrapperProps {
   children: (props: { loading: boolean; error: Error | null }) => React.ReactElement;
 }
 
-const PDFDownloadWrapper: React.FC<PDFDownloadWrapperProps> = ({ document, fileName, children }) => {
-  // Suppress the React 18 warning
+const PDFDownloadWrapper: React.FC<PDFDownloadWrapperProps> = ({
+  document,
+  fileName,
+  children,
+}) => {
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<Error | null>(null);
+
   useEffect(() => {
-    const originalConsoleError = console.error;
-    console.error = (...args) => {
-      if (
-        typeof args[0] === 'string' &&
-        args[0].includes('ReactDOM.render is no longer supported in React 18')
-      ) {
-        return;
-      }
-      originalConsoleError(...args);
+    const handleFontError = (event: ErrorEvent) => {
+      console.warn('Font loading error:', event.error);
+      setError(event.error || new Error('Font loading failed'));
+      toast.error('Error loading fonts for PDF generation. Using fallback fonts.');
     };
 
+    window.addEventListener('error', (event) => {
+      if (event.target instanceof HTMLLinkElement && event.target.href.includes('font')) {
+        handleFontError(event as ErrorEvent);
+      }
+    });
+
+    // Set loading to false after initial font check
+    setLoading(false);
+
     return () => {
-      console.error = originalConsoleError;
+      window.removeEventListener('error', handleFontError);
     };
   }, []);
 
   return (
-    <PDFDownloadLink document={document} fileName={fileName}>
-      {children}
+    <PDFDownloadLink
+      document={document}
+      fileName={fileName}
+      className="download-link"
+    >
+      {(props: BlobProviderParams) => {
+        const isLoading = loading || props.loading;
+        const hasError = error || props.error;
+
+        if (hasError) {
+          console.error('PDF generation error:', hasError);
+        }
+
+        return children({ loading: isLoading, error: hasError });
+      }}
     </PDFDownloadLink>
   );
 };

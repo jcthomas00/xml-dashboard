@@ -7,20 +7,106 @@ import { parseXMLData } from '../utils/xmlParser';
 import '../styles/Dashboard.css';
 import { Doughnut, Line } from 'react-chartjs-2';
 import Chart from 'chart.js/auto';
-import { CategoryScale } from 'chart.js';
+import { CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend, ArcElement } from 'chart.js';
+import html2canvas from 'html2canvas';
+import { toast } from 'react-hot-toast';
+import { createRoot } from 'react-dom/client';
+import * as PDFLib from 'pdf-lib';
 
 // Register the CategoryScale
-Chart.register(CategoryScale);
+Chart.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend, ArcElement);
 
 interface EducationItem {
   label: string;
-  value: number;
+  yd: number;
+  ptd: string;
+}
+
+interface ChartDataItem {
+  label: string;
+  yd: number;
+  ptd: string;
+}
+
+interface ExportSettings {
+  gender: boolean;
+  division: boolean;
+  age: boolean;
+  presentingIssues: boolean;
+  referredBy: boolean;
+  workStatus: boolean;
+  education: boolean;
+}
+
+interface ChartData {
+  labels: string[];
+  datasets: {
+    label?: string;
+    data: number[];
+    backgroundColor: string | string[];
+    borderColor: string | string[];
+    borderWidth: number;
+  }[];
+}
+
+interface DatasetItem {
+  label: string;
+  data: number[];
+  backgroundColor: string;
+  borderColor: string;
+  borderWidth: number;
+}
+
+interface TableRow {
+  label: string;
+  yd: number;
+  ptd: string;
+}
+
+interface DataValue {
+  yd: number;
+  ptd: string;
+}
+
+interface ChartProps {
+  type: 'bar' | 'doughnut';
+  data: ChartData;
+  options: {
+    responsive: boolean;
+    plugins: {
+      legend: {
+        display: boolean;
+        position?: 'right';
+      };
+    };
+  };
+}
+
+interface DataEntry {
+  [key: string]: {
+    yd: number;
+    ptd: string;
+  };
+}
+
+interface ReduceCallback<T> {
+  (accumulator: T, currentValue: ChartDataItem): T;
 }
 
 const Dashboard: React.FC = () => {
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+  const [exportSettings, setExportSettings] = useState<ExportSettings>({
+    gender: true,
+    division: true,
+    age: true,
+    presentingIssues: true,
+    referredBy: true,
+    workStatus: true,
+    education: true
+  });
+  const [pdfTrigger, setPdfTrigger] = useState(false);
 
   const handleFileUpload = async (file: File) => {
     try {
@@ -381,18 +467,45 @@ const Dashboard: React.FC = () => {
   }, [data?.presentingIssues]);
 
   // Add education data processing
-  const educationData = useMemo<EducationItem[]>(() => {
+  const educationData = useMemo(() => {
     if (!data?.education) return [];
-    return data.education.map((item: { label: string; yd: number }) => ({
+    return data.education.map((item: { label: string; yd: number; ptd: string }) => ({
       label: item.label,
-      value: item.yd
+      yd: item.yd,
+      ptd: item.ptd
     }));
   }, [data?.education]);
 
   const totalEducation = useMemo(() => {
     if (!educationData.length) return 0;
-    return educationData.reduce((sum: number, item: EducationItem) => sum + item.value, 0);
+    return educationData.reduce((sum: number, item: EducationItem) => sum + item.yd, 0);
   }, [educationData]);
+
+  const handleExport = () => {
+    setPdfTrigger(true);
+  };
+
+  const handlePdfGenerated = () => {
+    setPdfTrigger(false);
+  };
+
+  const handlePrint = () => {
+    // Hide elements that shouldn't be printed
+    const elementsToHide = document.querySelectorAll('.no-print');
+    elementsToHide.forEach(el => {
+      (el as HTMLElement).style.display = 'none';
+    });
+
+    // Trigger print
+    window.print();
+
+    // Restore hidden elements after a short delay
+    setTimeout(() => {
+      elementsToHide.forEach(el => {
+        (el as HTMLElement).style.display = '';
+      });
+    }, 1000);
+  };
 
   if (loading && !data) {
     return (
@@ -422,16 +535,33 @@ const Dashboard: React.FC = () => {
       
       <div className="dashboard-header">
         <h1>EAP Dashboard</h1>
-        <PDFDownloadWrapper
-          document={<DashboardPDF data={data} />}
-          fileName="eap-dashboard-report.pdf"
-        >
-          {({ loading: pdfLoading, error: pdfError }) => (
-            <button className="download-button">
-              {pdfLoading ? 'Generating PDF...' : 'Download PDF'}
-            </button>
-          )}
-        </PDFDownloadWrapper>
+        <div className="button-group">
+          <button
+            onClick={handlePrint}
+            className="print-button"
+          >
+            Print as PDF
+          </button>
+          <PDFDownloadWrapper
+            document={
+              <DashboardPDF
+                data={data}
+                trigger={pdfTrigger}
+              />
+            }
+            fileName="dashboard-report.pdf"
+          >
+            {({ loading, error }) => (
+              <button
+                onClick={handleExport}
+                disabled={loading}
+                className="export-button"
+              >
+                {loading ? 'Generating PDF...' : 'Export as PDF'}
+              </button>
+            )}
+          </PDFDownloadWrapper>
+        </div>
       </div>
 
       <div className="statistics-grid">
@@ -473,7 +603,7 @@ const Dashboard: React.FC = () => {
         <div className="chart-section">
           <h3>Gender Distribution</h3>
           <div className="chart-section-content">
-            <div className="chart-card">
+            <div id="gender-chart" className="chart-card">
               <ChartRenderer
                 type="doughnut"
                 data={genderData}
@@ -521,7 +651,7 @@ const Dashboard: React.FC = () => {
         <div className="chart-section">
           <h3>Division Distribution</h3>
           <div className="chart-section-content">
-            <div className="chart-card">
+            <div id="division-chart" className="chart-card">
               <ChartRenderer
                 type="bar"
                 data={divisionChartData}
@@ -636,7 +766,7 @@ const Dashboard: React.FC = () => {
         <div className="chart-section">
           <h3>Age Distribution</h3>
           <div className="chart-section-content">
-            <div className="chart-card">
+            <div id="age-chart" className="chart-card">
               <ChartRenderer
                 type="bar"
                 data={formatChartData(data?.age, 'bar')}
@@ -718,29 +848,29 @@ const Dashboard: React.FC = () => {
         </div>
 
         <div className="chart-section">
-          <h2>Work Status</h2>
+          <h3>Work Status</h3>
           <div className="chart-section-content">
-            <div className="chart-card">
-              {workStatusData && (
-                <ChartRenderer
-                  type="doughnut"
-                  data={workStatusData}
-                  options={{
-                    plugins: {
-                      legend: {
-                        position: 'bottom',
-                        labels: {
-                          boxWidth: 20,
-                          padding: 15,
-                          font: {
-                            size: 12
-                          }
+            <div id="work-status-chart" className="chart-card">
+              <ChartRenderer
+                type="doughnut"
+                data={workStatusData}
+                options={{
+                  responsive: true,
+                  maintainAspectRatio: false,
+                  plugins: {
+                    legend: {
+                      position: 'bottom',
+                      labels: {
+                        boxWidth: 20,
+                        padding: 15,
+                        font: {
+                          size: 12
                         }
-                      },
+                      }
                     }
-                  }}
-                />
-              )}
+                  }
+                }}
+              />
             </div>
             <div className="data-table">
               {data?.workStatus && (
@@ -777,28 +907,25 @@ const Dashboard: React.FC = () => {
           <div className="chart-section">
             <h3>Education</h3>
             <div className="chart-section-content">
-              <div className="chart-card">
-                <Doughnut
-                  data={{
-                    labels: educationData.map(item => item.label),
-                    datasets: [{
-                      data: educationData.map(item => item.value),
-                      backgroundColor: [
-                        '#FF6384',
-                        '#36A2EB',
-                        '#FFCE56',
-                        '#4BC0C0',
-                        '#9966FF',
-                        '#FF9F40',
-                        '#FF6384',
-                        '#36A2EB',
-                        '#FFCE56'
-                      ]
-                    }]
-                  }}
+              <div id="education-chart" className="chart-card">
+                <ChartRenderer
+                  type="doughnut"
+                  data={formatChartData(data?.education, 'pie')}
                   options={{
                     responsive: true,
                     maintainAspectRatio: false,
+                    plugins: {
+                      legend: {
+                        position: 'bottom',
+                        labels: {
+                          boxWidth: 20,
+                          padding: 15,
+                          font: {
+                            size: 12
+                          }
+                        }
+                      }
+                    }
                   }}
                 />
               </div>
@@ -815,8 +942,8 @@ const Dashboard: React.FC = () => {
                     {educationData.map((item: EducationItem, index: number) => (
                       <tr key={index}>
                         <td>{item.label}</td>
-                        <td>{item.value}</td>
-                        <td>{((item.value / totalEducation) * 100).toFixed(1)}%</td>
+                        <td>{item.yd}</td>
+                        <td>{((item.yd / totalEducation) * 100).toFixed(1)}%</td>
                       </tr>
                     ))}
                   </tbody>
