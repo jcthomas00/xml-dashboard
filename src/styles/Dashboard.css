@@ -147,7 +147,6 @@
 .data-table {
   flex: 1;
   min-width: 400px;
-  overflow-x: auto;
 }
 
 .data-table h3 {

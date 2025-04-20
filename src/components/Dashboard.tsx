@@ -1,20 +1,13 @@
 import React, { useState, useMemo } from 'react';
 import ChartRenderer from './ChartRenderer';
-import DashboardPDF from './DashboardPDF';
-import PDFDownloadWrapper from './PDFDownloadWrapper';
 import FileUpload from './FileUpload';
 import { parseXMLData } from '../utils/xmlParser';
 import '../styles/Dashboard.css';
-import { Doughnut, Line } from 'react-chartjs-2';
-import Chart from 'chart.js/auto';
-import { CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend, ArcElement } from 'chart.js';
-import html2canvas from 'html2canvas';
+import { Chart as ChartJS, ArcElement, Tooltip, Legend, CategoryScale, LinearScale, PointElement, LineElement, Title } from 'chart.js';
 import { toast } from 'react-hot-toast';
-import { createRoot } from 'react-dom/client';
-import * as PDFLib from 'pdf-lib';
 
 // Register the CategoryScale
-Chart.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend, ArcElement);
+ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend, ArcElement);
 
 interface EducationItem {
   label: string;
@@ -106,7 +99,6 @@ const Dashboard: React.FC = () => {
     workStatus: true,
     education: true
   });
-  const [pdfTrigger, setPdfTrigger] = useState(false);
 
   const handleFileUpload = async (file: File) => {
     try {
@@ -481,32 +473,6 @@ const Dashboard: React.FC = () => {
     return educationData.reduce((sum: number, item: EducationItem) => sum + item.yd, 0);
   }, [educationData]);
 
-  const handleExport = () => {
-    setPdfTrigger(true);
-  };
-
-  const handlePdfGenerated = () => {
-    setPdfTrigger(false);
-  };
-
-  const handlePrint = () => {
-    // Hide elements that shouldn't be printed
-    const elementsToHide = document.querySelectorAll('.no-print');
-    elementsToHide.forEach(el => {
-      (el as HTMLElement).style.display = 'none';
-    });
-
-    // Trigger print
-    window.print();
-
-    // Restore hidden elements after a short delay
-    setTimeout(() => {
-      elementsToHide.forEach(el => {
-        (el as HTMLElement).style.display = '';
-      });
-    }, 1000);
-  };
-
   if (loading && !data) {
     return (
       <div className="dashboard-container">
@@ -534,33 +500,11 @@ const Dashboard: React.FC = () => {
       <FileUpload onFileUpload={handleFileUpload} />
       
       <div className="dashboard-header">
-        <h1>EAP Dashboard</h1>
+        <h1>Dashboard</h1>
         <div className="button-group">
-          <button
-            onClick={handlePrint}
-            className="print-button"
-          >
+          <button className="print-button" onClick={() => window.print()}>
             Print as PDF
           </button>
-          <PDFDownloadWrapper
-            document={
-              <DashboardPDF
-                data={data}
-                trigger={pdfTrigger}
-              />
-            }
-            fileName="dashboard-report.pdf"
-          >
-            {({ loading, error }) => (
-              <button
-                onClick={handleExport}
-                disabled={loading}
-                className="export-button"
-              >
-                {loading ? 'Generating PDF...' : 'Export as PDF'}
-              </button>
-            )}
-          </PDFDownloadWrapper>
         </div>
       </div>
 
