@@ -1,10 +1,12 @@
 import React from 'react';
 import { Document, Page, Text, View, StyleSheet, Font } from '@react-pdf/renderer';
-import { DashboardData } from '../types/DashboardData';
+import { Chart as ChartJS, ArcElement, Tooltip, Legend, CategoryScale, LinearScale, BarElement, Title } from 'chart.js';
+import { Pie, Bar } from 'react-chartjs-2';
+import { StatValue, DashboardData } from '../types/dashboard';
 
 // Register fonts
 Font.register({
-  family: 'Helvetica',
+  family: 'Roboto',
   fonts: [
     { src: 'https://fonts.gstatic.com/s/roboto/v30/KFOmCnqEu92Fr1Mu4mxK.ttf' },
     { src: 'https://fonts.gstatic.com/s/roboto/v30/KFOlCnqEu92Fr1MmEU9fBBc4.ttf', fontWeight: 'bold' }
@@ -112,12 +114,7 @@ const styles = StyleSheet.create({
 });
 
 interface DashboardPDFProps {
-  data: DashboardData | null;
-}
-
-interface StatValue {
-  ytd: number;
-  ptd: string;
+  data: DashboardData;
 }
 
 const DashboardPDF: React.FC<DashboardPDFProps> = ({ data }) => {
@@ -167,7 +164,13 @@ const DashboardPDF: React.FC<DashboardPDFProps> = ({ data }) => {
             <Text style={styles.tableHeaderCell}>Period to Date</Text>
             <Text style={styles.tableHeaderCell}>Year to Date</Text>
           </View>
-          {Object.entries(data).map(([key, value]) => renderTableRow(key, value))}
+          {Object.entries(data).map(([key, value]) => (
+            <View key={key} style={styles.tableRow}>
+              <Text style={styles.tableCell}>{key}</Text>
+              <Text style={styles.tableCell}>{value.ptd}</Text>
+              <Text style={styles.tableCell}>{value.ytd}</Text>
+            </View>
+          ))}
         </View>
       </View>
     );
@@ -185,18 +188,25 @@ const DashboardPDF: React.FC<DashboardPDFProps> = ({ data }) => {
         {/* Statistics Section */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Overview</Text>
-          <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-            <View style={styles.statCard}>
-              <Text style={styles.statTitle}>Total Clients</Text>
-              <Text style={styles.statValue}>{totalClients || 0}</Text>
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between', flexWrap: 'wrap' }}>
+            <View style={[styles.statCard, { width: '48%', marginBottom: 10 }]}>
+              <Text style={styles.statTitle}>Total Cases</Text>
+              <Text style={styles.statValue}>{data?.totalCases || 0}</Text>
             </View>
-            <View style={styles.statCard}>
-              <Text style={styles.statTitle}>Active Cases</Text>
-              <Text style={styles.statValue}>{activeCases || 0}</Text>
+            <View style={[styles.statCard, { width: '48%', marginBottom: 10 }]}>
+              <Text style={styles.statTitle}>EAP Cases</Text>
+              <Text style={styles.statValue}>{data?.caseTypes?.eap?.ytd || 0}</Text>
             </View>
-            <View style={styles.statCard}>
-              <Text style={styles.statTitle}>Closed Cases</Text>
-              <Text style={styles.statValue}>{closedCases || 0}</Text>
+            <View style={[styles.statCard, { width: '48%', marginBottom: 10 }]}>
+              <Text style={styles.statTitle}>Worklife Cases</Text>
+              <Text style={styles.statValue}>{data?.caseTypes?.worklife?.ytd || 0}</Text>
+            </View>
+            <View style={[styles.statCard, { width: '48%', marginBottom: 10 }]}>
+              <Text style={styles.statTitle}>Utilization Rate</Text>
+              <View style={{ marginTop: 5 }}>
+                <Text style={[styles.statValue, { fontSize: 14 }]}>Current: {data?.utilizationRate?.current || 0}%</Text>
+                <Text style={[styles.statValue, { fontSize: 14 }]}>Yearly: {data?.utilizationRate?.yearly || 0}%</Text>
+              </View>
             </View>
           </View>
         </View>
