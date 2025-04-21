@@ -3,7 +3,7 @@ import ChartRenderer from './ChartRenderer';
 import FileUpload from './FileUpload';
 import { parseXMLData } from '../utils/xmlParser';
 import '../styles/Dashboard.css';
-import { Chart as ChartJS, ArcElement, Tooltip, Legend, CategoryScale, LinearScale, PointElement, LineElement, Title, ChartData } from 'chart.js';
+import { Chart as ChartJS, ArcElement, Tooltip, Legend, CategoryScale, LinearScale, PointElement, LineElement, Title } from 'chart.js';
 
 // Register the CategoryScale
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend, ArcElement);
