@@ -4,7 +4,6 @@ import FileUpload from './FileUpload';
 import { parseXMLData } from '../utils/xmlParser';
 import '../styles/Dashboard.css';
 import { Chart as ChartJS, ArcElement, Tooltip, Legend, CategoryScale, LinearScale, PointElement, LineElement, Title } from 'chart.js';
-import { toast } from 'react-hot-toast';
 
 // Register the CategoryScale
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend, ArcElement);
@@ -21,16 +20,6 @@ interface ChartDataItem {
   ptd: string;
 }
 
-interface ExportSettings {
-  gender: boolean;
-  division: boolean;
-  age: boolean;
-  presentingIssues: boolean;
-  referredBy: boolean;
-  workStatus: boolean;
-  education: boolean;
-}
-
 interface ChartData {
   labels: string[];
   datasets: {
@@ -40,50 +29,6 @@ interface ChartData {
     borderColor: string | string[];
     borderWidth: number;
   }[];
-}
-
-interface DatasetItem {
-  label: string;
-  data: number[];
-  backgroundColor: string;
-  borderColor: string;
-  borderWidth: number;
-}
-
-interface TableRow {
-  label: string;
-  yd: number;
-  ptd: string;
-}
-
-interface DataValue {
-  yd: number;
-  ptd: string;
-}
-
-interface ChartProps {
-  type: 'bar' | 'doughnut';
-  data: ChartData;
-  options: {
-    responsive: boolean;
-    plugins: {
-      legend: {
-        display: boolean;
-        position?: 'right';
-      };
-    };
-  };
-}
-
-interface DataEntry {
-  [key: string]: {
-    yd: number;
-    ptd: string;
-  };
-}
-
-interface ReduceCallback<T> {
-  (accumulator: T, currentValue: ChartDataItem): T;
 }
 
 interface ChartVisibility {
@@ -100,15 +45,6 @@ const Dashboard: React.FC = () => {
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
-  const [exportSettings, setExportSettings] = useState<ExportSettings>({
-    gender: true,
-    division: true,
-    age: true,
-    presentingIssues: true,
-    referredBy: true,
-    workStatus: true,
-    education: true
-  });
   const [chartVisibility, setChartVisibility] = useState<ChartVisibility>({
     gender: false,
     division: false,
