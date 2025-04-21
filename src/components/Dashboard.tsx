@@ -431,35 +431,6 @@ const Dashboard: React.FC = () => {
     };
   }, [data?.workStatus]);
 
-  // Calculate totals for each section
-  const totalGender = useMemo(() => {
-    if (!genderData?.datasets?.[0]?.data) return 0;
-    return genderData.datasets[0].data.reduce((sum, count) => sum + count, 0);
-  }, [genderData]);
-
-  const totalDivision = useMemo(() => {
-    if (!divisionChartData?.datasets?.[0]?.data) return 0;
-    return divisionChartData.datasets[0].data.reduce((sum, count) => sum + count, 0);
-  }, [divisionChartData]);
-
-  const totalAge = useMemo(() => {
-    if (!ageData?.datasets?.[0]?.data) return 0;
-    return ageData.datasets[0].data.reduce((sum: number, count: number) => sum + count, 0);
-  }, [ageData]);
-
-  const totalReferredBy = useMemo(() => {
-    if (!referredByData?.datasets?.[0]?.data) return 0;
-    return referredByData.datasets[0].data.reduce((sum, count) => sum + count, 0);
-  }, [referredByData]);
-
-  const totalWorkStatus = useMemo(() => {
-    if (!data?.workStatus) return 0;
-    return Object.values(data.workStatus).reduce<number>((sum, item) => {
-      const { yd } = item as { yd: number };
-      return sum + yd;
-    }, 0);
-  }, [data?.workStatus]);
-
   // Group presenting issues by category
   const groupedIssues = useMemo(() => {
     if (!data?.presentingIssues) return {};
@@ -491,6 +462,22 @@ const Dashboard: React.FC = () => {
     if (!educationData.length) return 0;
     return educationData.reduce((sum: number, item: EducationItem) => sum + item.yd, 0);
   }, [educationData]);
+
+  // Calculate totals for each section
+  const totalDivision = useMemo(() => {
+    if (!divisionChartData?.datasets?.[0]?.data) return 0;
+    return divisionChartData.datasets[0].data.reduce((sum, count) => sum + count, 0);
+  }, [divisionChartData]);
+
+  const totalAge = useMemo(() => {
+    if (!ageData?.datasets?.[0]?.data) return 0;
+    return ageData.datasets[0].data.reduce((sum: number, count: number) => sum + count, 0);
+  }, [ageData]);
+
+  const totalReferredBy = useMemo(() => {
+    if (!referredByData?.datasets?.[0]?.data) return 0;
+    return referredByData.datasets[0].data.reduce((sum, count) => sum + count, 0);
+  }, [referredByData]);
 
   const handleVisibilityChange = (chart: keyof ChartVisibility) => {
     setChartVisibility(prev => ({

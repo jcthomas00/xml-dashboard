@@ -3,6 +3,33 @@ export interface StatValue {
   ytd: number;
 }
 
+export interface ChartDataItem {
+  label: string;
+  value: number;
+  percentage: number;
+}
+
+export interface ChartData {
+  labels: string[];
+  datasets: {
+    label: string;
+    data: number[];
+    backgroundColor: string[];
+    borderColor: string[];
+    borderWidth: number;
+  }[];
+}
+
+export interface ChartVisibility {
+  gender: boolean;
+  division: boolean;
+  age: boolean;
+  presentingIssues: boolean;
+  referredBy: boolean;
+  workStatus: boolean;
+  education: boolean;
+}
+
 export interface DashboardData {
   gender: Record<string, StatValue>;
   division: Record<string, StatValue>;
