@@ -3,7 +3,7 @@ import ChartRenderer from './ChartRenderer';
 import FileUpload from './FileUpload';
 import { parseXMLData } from '../utils/xmlParser';
 import '../styles/Dashboard.css';
-import { Chart as ChartJS, ArcElement, Tooltip, Legend, CategoryScale, LinearScale, PointElement, LineElement, Title } from 'chart.js';
+import { Chart as ChartJS, ArcElement, Tooltip, Legend, CategoryScale, LinearScale, PointElement, LineElement, Title, ChartData } from 'chart.js';
 
 // Register the CategoryScale
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend, ArcElement);
@@ -12,23 +12,6 @@ interface EducationItem {
   label: string;
   yd: number;
   ptd: string;
-}
-
-interface ChartDataItem {
-  label: string;
-  yd: number;
-  ptd: string;
-}
-
-interface ChartData {
-  labels: string[];
-  datasets: {
-    label?: string;
-    data: number[];
-    backgroundColor: string | string[];
-    borderColor: string | string[];
-    borderWidth: number;
-  }[];
 }
 
 interface ChartVisibility {
