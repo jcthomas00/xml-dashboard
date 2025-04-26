@@ -527,8 +527,8 @@ const Dashboard: React.FC = () => {
                   {genderData?.labels?.map((label, index) => (
                     <tr key={label}>
                       <td>{label}</td>
-                      <td>{genderData?.datasets?.[0]?.data?.[index] || 0}</td>
-                      <td>{((genderData?.datasets?.[0]?.data?.[index] || 0) / totalEducation * 100).toFixed(1)}%</td>
+                      <td>{data?.gender?.[label.toLowerCase()]?.pd || 0}</td>
+                      <td>{data?.gender?.[label.toLowerCase()]?.ptd || '0%'}</td>
                     </tr>
                   ))}
                 </tbody>
