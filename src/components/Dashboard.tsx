@@ -4,6 +4,7 @@ import FileUpload from './FileUpload';
 import { parseXMLData } from '../utils/xmlParser';
 import '../styles/Dashboard.css';
 import { Chart as ChartJS, ArcElement, Tooltip, Legend, CategoryScale, LinearScale, PointElement, LineElement, Title } from 'chart.js';
+import ChartSection, { CHART_SECTIONS } from './ChartSection';
 
 // Register the CategoryScale
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend, ArcElement);
@@ -15,28 +16,19 @@ interface EducationItem {
 }
 
 interface ChartVisibility {
-  gender: boolean;
-  division: boolean;
-  age: boolean;
-  presentingIssues: boolean;
-  referredBy: boolean;
-  workStatus: boolean;
-  education: boolean;
+  [key: string]: boolean;
 }
 
 const Dashboard: React.FC = () => {
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
-  const [chartVisibility, setChartVisibility] = useState<ChartVisibility>({
-    gender: false,
-    division: false,
-    age: false,
-    presentingIssues: false,
-    referredBy: false,
-    workStatus: false,
-    education: false
-  });
+  const [chartVisibility, setChartVisibility] = useState<ChartVisibility>(
+    CHART_SECTIONS.reduce((acc, section) => {
+      acc[section.name] = false;
+      return acc;
+    }, {} as ChartVisibility)
+  );
 
   const handleFileUpload = async (file: File) => {
     try {
@@ -398,7 +390,7 @@ const Dashboard: React.FC = () => {
     return referredByData.datasets[0].data.reduce((sum, count) => sum + count, 0);
   }, [referredByData]);
 
-  const handleVisibilityChange = (chart: keyof ChartVisibility) => {
+  const handleVisibilityChange = (chart: string) => {
     setChartVisibility(prev => ({
       ...prev,
       [chart]: !prev[chart]
@@ -476,446 +468,15 @@ const Dashboard: React.FC = () => {
       </div>
 
       <div className="charts-grid">
-        <div className={`chart-section ${chartVisibility.gender ? 'hidden' : ''}`}>
-          <div className="chart-section-header">
-            <h3>Gender Distribution</h3>
-            <div className="switch-container">
-              <span className="switch-label">Hide</span>
-              <label className="switch">
-                <input
-                  type="checkbox"
-                  checked={chartVisibility.gender}
-                  onChange={() => handleVisibilityChange('gender')}
-                />
-                <span className="slider"></span>
-              </label>
-            </div>
-          </div>
-          <div className="chart-section-content">
-            <div id="gender-chart" className="chart-card">
-              <ChartRenderer
-                type="doughnut"
-                data={genderData}
-                options={{
-                  responsive: true,
-                  maintainAspectRatio: false,
-                  plugins: {
-                    legend: {
-                      position: 'bottom',
-                      labels: {
-                        boxWidth: 20,
-                        padding: 15,
-                        font: {
-                          size: 12
-                        }
-                      }
-                    }
-                  }
-                }}
-              />
-            </div>
-            <div className="data-table">
-              <table>
-                <thead>
-                  <tr>
-                    <th>Gender</th>
-                    <th>Count</th>
-                    <th>Percentage</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {genderData?.labels?.map((label, index) => (
-                    <tr key={label}>
-                      <td>{label}</td>
-                      <td>{data?.gender?.[label.toLowerCase()]?.pd || 0}</td>
-                      <td>{data?.gender?.[label.toLowerCase()]?.ptd || '0%'}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </div>
-
-        <div className={`chart-section ${chartVisibility.division ? 'hidden' : ''}`}>
-          <div className="chart-section-header">
-            <h3>Division Distribution</h3>
-            <div className="switch-container">
-              <span className="switch-label">Hide</span>
-              <label className="switch">
-                <input
-                  type="checkbox"
-                  checked={chartVisibility.division}
-                  onChange={() => handleVisibilityChange('division')}
-                />
-                <span className="slider"></span>
-              </label>
-            </div>
-          </div>
-          <div className="chart-section-content">
-            <div id="division-chart" className="chart-card">
-              <ChartRenderer
-                type="bar"
-                data={divisionChartData}
-                options={{
-                  responsive: true,
-                  maintainAspectRatio: false,
-                }}
-              />
-            </div>
-            <div className="data-table">
-              <table>
-                <thead>
-                  <tr>
-                    <th>Division</th>
-                    <th>Count</th>
-                    <th>Percentage</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {divisionChartData?.labels?.map((label, index) => (
-                    <tr key={label}>
-                      <td>{label}</td>
-                      <td>{divisionChartData?.datasets?.[0]?.data?.[index] || 0}</td>
-                      <td>{((divisionChartData?.datasets?.[0]?.data?.[index] || 0) / totalDivision * 100).toFixed(1)}%</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </div>
-
-        <div className={`chart-section ${chartVisibility.presentingIssues ? 'hidden' : ''}`}>
-          <div className="chart-section-header">
-            <h3>Presenting Issues</h3>
-            <div className="switch-container">
-              <span className="switch-label">Hide</span>
-              <label className="switch">
-                <input
-                  type="checkbox"
-                  checked={chartVisibility.presentingIssues}
-                  onChange={() => handleVisibilityChange('presentingIssues')}
-                />
-                <span className="slider"></span>
-              </label>
-            </div>
-          </div>
-          <div className="chart-section-content">
-            <div className="chart-card">
-              <ChartRenderer
-                type="bar"
-                data={presentingIssuesData}
-                options={{
-                  responsive: true,
-                  maintainAspectRatio: false,
-                  scales: {
-                    x: {
-                      stacked: true,
-                      title: {
-                        display: false
-                      }
-                    },
-                    y: {
-                      stacked: true,
-                      beginAtZero: true,
-                      title: {
-                        display: false
-                      }
-                    }
-                  },
-                  plugins: {
-                    legend: {
-                      display: false
-                    },
-                    title: {
-                      display: true,
-                      text: 'Presenting Issues by Category',
-                      font: {
-                        size: 16
-                      }
-                    }
-                  }
-                }}
-              />
-            </div>
-            <div className="data-table">
-              {Object.entries(groupedIssues).map(([category, issues]) => (
-                <div key={category} className="category-group">
-                  <details>
-                    <summary className="category-header">
-                      <span className="category-title">{category}</span>
-                      <span className="category-total">
-                        {issues.reduce((sum: number, issue: string) => sum + (data?.presentingIssues?.[`${category} - ${issue}`]?.yd || 0), 0)} cases
-                      </span>
-                    </summary>
-                    <table>
-                      <thead>
-                        <tr>
-                          <th>Issue</th>
-                          <th>Count</th>
-                          <th>Percentage</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {issues.map((issue: string) => {
-                          const count = data?.presentingIssues?.[`${category} - ${issue}`]?.yd || 0;
-                          const percentage = data?.presentingIssues?.[`${category} - ${issue}`]?.ptd || '0%';
-                          return (
-                            <tr key={issue}>
-                              <td>{issue}</td>
-                              <td>{count}</td>
-                              <td>{percentage}</td>
-                            </tr>
-                          );
-                        })}
-                      </tbody>
-                    </table>
-                  </details>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-
-        <div className={`chart-section ${chartVisibility.age ? 'hidden' : ''}`}>
-          <div className="chart-section-header">
-            <h3>Age Distribution</h3>
-            <div className="switch-container">
-              <span className="switch-label">Hide</span>
-              <label className="switch">
-                <input
-                  type="checkbox"
-                  checked={chartVisibility.age}
-                  onChange={() => handleVisibilityChange('age')}
-                />
-                <span className="slider"></span>
-              </label>
-            </div>
-          </div>
-          <div className="chart-section-content">
-            <div id="age-chart" className="chart-card">
-              <ChartRenderer
-                type="bar"
-                data={formatChartData(data?.age, 'bar')}
-                options={{
-                  responsive: true,
-                  maintainAspectRatio: false,
-                }}
-              />
-            </div>
-            <div className="data-table">
-              <table>
-                <thead>
-                  <tr>
-                    <th>Age Range</th>
-                    <th>Count</th>
-                    <th>Percentage</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {ageData?.labels?.map((label: string, index: number) => (
-                    <tr key={label}>
-                      <td>{label}</td>
-                      <td>{ageData?.datasets?.[0]?.data?.[index] || 0}</td>
-                      <td>{((ageData?.datasets?.[0]?.data?.[index] || 0) / totalAge * 100).toFixed(1)}%</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </div>
-
-        <div className={`chart-section ${chartVisibility.referredBy ? 'hidden' : ''}`}>
-          <div className="chart-section-header">
-            <h3>Referred By</h3>
-            <div className="switch-container">
-              <span className="switch-label">Hide</span>
-              <label className="switch">
-                <input
-                  type="checkbox"
-                  checked={chartVisibility.referredBy}
-                  onChange={() => handleVisibilityChange('referredBy')}
-                />
-                <span className="slider"></span>
-              </label>
-            </div>
-          </div>
-          <div className="chart-section-content">
-            <div className="chart-card">
-              <ChartRenderer
-                type="doughnut"
-                data={referredByData}
-                options={{
-                  responsive: true,
-                  maintainAspectRatio: false,
-                  plugins: {
-                    legend: {
-                      position: 'bottom',
-                      labels: {
-                        boxWidth: 20,
-                        padding: 15,
-                        font: {
-                          size: 12
-                        }
-                      }
-                    }
-                  }
-                }}
-              />
-            </div>
-            <div className="data-table">
-              <table>
-                <thead>
-                  <tr>
-                    <th>Source</th>
-                    <th>Count</th>
-                    <th>Percentage</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {referredByData?.labels?.map((label, index) => (
-                    <tr key={label}>
-                      <td>{label}</td>
-                      <td>{referredByData?.datasets?.[0]?.data?.[index] || 0}</td>
-                      <td>{((referredByData?.datasets?.[0]?.data?.[index] || 0) / totalReferredBy * 100).toFixed(1)}%</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </div>
-
-        <div className={`chart-section ${chartVisibility.workStatus ? 'hidden' : ''}`}>
-          <div className="chart-section-header">
-            <h3>Work Status</h3>
-            <div className="switch-container">
-              <span className="switch-label">Hide</span>
-              <label className="switch">
-                <input
-                  type="checkbox"
-                  checked={chartVisibility.workStatus}
-                  onChange={() => handleVisibilityChange('workStatus')}
-                />
-                <span className="slider"></span>
-              </label>
-            </div>
-          </div>
-          <div className="chart-section-content">
-            <div id="work-status-chart" className="chart-card">
-              <ChartRenderer
-                type="doughnut"
-                data={workStatusData}
-                options={{
-                  responsive: true,
-                  maintainAspectRatio: false,
-                  plugins: {
-                    legend: {
-                      position: 'bottom',
-                      labels: {
-                        boxWidth: 20,
-                        padding: 15,
-                        font: {
-                          size: 12
-                        }
-                      }
-                    }
-                  }
-                }}
-              />
-            </div>
-            <div className="data-table">
-              {data?.workStatus && (
-                <div className="data-table">
-                  <table>
-                    <thead>
-                      <tr>
-                        <th>Status</th>
-                        <th>Percentage</th>
-                        <th>Count</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {Object.entries(data.workStatus)
-                        .filter(([_, value]) => (value as { yd: number }).yd !== 0)
-                        .sort((a, b) => (b[1] as { yd: number }).yd - (a[1] as { yd: number }).yd)
-                        .map(([key, value]) => (
-                          <tr key={key}>
-                            <td>{key}</td>
-                            <td>{(value as { ptd: string }).ptd}</td>
-                            <td>{(value as { yd: number }).yd}</td>
-                          </tr>
-                        ))}
-                    </tbody>
-                  </table>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-
-        <div className={`chart-section ${chartVisibility.education ? 'hidden' : ''}`}>
-          <div className="chart-section-header">
-            <h3>Education</h3>
-            <div className="switch-container">
-              <span className="switch-label">Hide</span>
-              <label className="switch">
-                <input
-                  type="checkbox"
-                  checked={chartVisibility.education}
-                  onChange={() => handleVisibilityChange('education')}
-                />
-                <span className="slider"></span>
-              </label>
-            </div>
-          </div>
-          <div className="chart-section-content">
-            <div id="education-chart" className="chart-card">
-              <ChartRenderer
-                type="doughnut"
-                data={formatChartData(data?.education, 'pie')}
-                options={{
-                  responsive: true,
-                  maintainAspectRatio: false,
-                  plugins: {
-                    legend: {
-                      position: 'bottom',
-                      labels: {
-                        boxWidth: 20,
-                        padding: 15,
-                        font: {
-                          size: 12
-                        }
-                      }
-                    }
-                  }
-                }}
-              />
-            </div>
-            <div className="data-table">
-              <table>
-                <thead>
-                  <tr>
-                    <th>Education Level</th>
-                    <th>Count</th>
-                    <th>Percentage</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {educationData.map((item: EducationItem, index: number) => (
-                    <tr key={index}>
-                      <td>{item.label}</td>
-                      <td>{item.yd}</td>
-                      <td>{((item.yd / totalEducation) * 100).toFixed(1)}%</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </div>
+        {CHART_SECTIONS.map(section => (
+          <ChartSection
+            key={section.name}
+            config={section}
+            data={data}
+            isVisible={chartVisibility[section.name]}
+            onVisibilityChange={() => handleVisibilityChange(section.name)}
+          />
+        ))}
       </div>
     </div>
   );
