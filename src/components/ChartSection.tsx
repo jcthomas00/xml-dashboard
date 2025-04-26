@@ -129,20 +129,25 @@ export const CHART_SECTIONS: ChartSectionConfig[] = [
   {
     name: 'education',
     title: 'Education',
-    chartType: 'doughnut',
+    chartType: 'bar',
     dataKey: 'education',
-    countLabel: 'YD_',
-    percentageLabel: 'PTD_',
+    countLabel: 'Textbox14',
+    percentageLabel: 'Textbox15',
     options: {
       responsive: true,
       maintainAspectRatio: false,
-      plugins: {
-        legend: {
-          position: 'bottom',
-          labels: {
-            boxWidth: 20,
-            padding: 15,
-            font: { size: 12 }
+      scales: {
+        y: {
+          beginAtZero: true,
+          title: {
+            display: true,
+            text: 'Number of Clients'
+          }
+        },
+        x: {
+          title: {
+            display: true,
+            text: 'Education Level'
           }
         }
       }
@@ -169,13 +174,85 @@ interface GroupedData {
 }
 
 const ChartSection: React.FC<ChartSectionProps> = ({ config, data, isVisible, onVisibilityChange }) => {
-  // Access the data directly from the root level
+  // Try both direct access and XML structure
   const sectionData = data?.[config.dataKey];
+  const xmlData = data?.[config.dataKey]?.Report?.table1?.table1_Optionskey_Collection?.table1_Optionskey as TableItem[];
   
-  if (!sectionData) return null;
+  if (!sectionData && !xmlData) return null;
+
+  // For education section, we need to handle the array of objects format
+  if (config.name === 'education' && Array.isArray(sectionData)) {
+    const filteredData = sectionData
+      .map(item => ({
+        key: item.label,
+        count: item.yd,
+        percentage: item.ptd
+      }))
+      .filter(item => item.count !== 0)
+      .sort((a, b) => b.count - a.count);
+
+    const chartData = {
+      labels: filteredData.map(item => item.key),
+      datasets: [{
+        label: 'Number of Clients',
+        data: filteredData.map(item => item.count),
+        backgroundColor: 'rgba(54, 162, 235, 0.6)',
+        borderColor: 'rgba(54, 162, 235, 1)',
+        borderWidth: 1,
+      }]
+    };
+
+    return (
+      <div className={`chart-section ${isVisible ? 'hidden' : ''}`}>
+        <div className="chart-section-header">
+          <h3>{config.title}</h3>
+          <div className="switch-container">
+            <span className="switch-label">Hide</span>
+            <label className="switch">
+              <input
+                type="checkbox"
+                checked={isVisible}
+                onChange={onVisibilityChange}
+              />
+              <span className="slider"></span>
+            </label>
+          </div>
+        </div>
+        <div className="chart-section-content">
+          <div className="chart-card">
+            <ChartRenderer
+              type={config.chartType}
+              data={chartData}
+              options={config.options}
+            />
+          </div>
+          <div className="data-table">
+            <table>
+              <thead>
+                <tr>
+                  <th>Education Level</th>
+                  <th>Count</th>
+                  <th>Percentage</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filteredData.map(item => (
+                  <tr key={item.key}>
+                    <td>{item.key}</td>
+                    <td>{item.count}</td>
+                    <td>{item.percentage}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   // For presenting issues, we need to handle the grouped data differently
-  if (config.name === 'presentingIssues') {
+  if (config.name === 'presentingIssues' && sectionData) {
     const groupedData = Object.entries(sectionData).reduce<Record<string, GroupedData>>((acc: Record<string, GroupedData>, [key, value]: [string, any]) => {
       const [mainCategory, issue] = key.split(' - ');
       if (!acc[mainCategory]) {
@@ -311,96 +388,100 @@ const ChartSection: React.FC<ChartSectionProps> = ({ config, data, isVisible, on
   }
 
   // For all other sections
-  const filteredData = Object.entries(sectionData)
-    .map(([key, value]: [string, any]) => ({
-      key,
-      count: value.yd,
-      percentage: value.ptd
-    }))
-    .filter(item => item.count !== 0)
-    .sort((a, b) => b.count - a.count);
+  if (sectionData) {
+    const filteredData = Object.entries(sectionData)
+      .map(([key, value]: [string, any]) => ({
+        key,
+        count: value.yd,
+        percentage: value.ptd
+      }))
+      .filter(item => item.count !== 0)
+      .sort((a, b) => b.count - a.count);
 
-  const chartData = {
-    labels: filteredData.map(item => item.key),
-    datasets: [{
-      data: filteredData.map(item => item.count),
-      backgroundColor: [
-        'rgba(54, 162, 235, 0.6)',
-        'rgba(255, 99, 132, 0.6)',
-        'rgba(255, 206, 86, 0.6)',
-        'rgba(75, 192, 192, 0.6)',
-        'rgba(153, 102, 255, 0.6)',
-        'rgba(255, 159, 64, 0.6)',
-        'rgba(199, 199, 199, 0.6)',
-        'rgba(83, 102, 255, 0.6)',
-        'rgba(40, 159, 64, 0.6)',
-        'rgba(210, 199, 199, 0.6)',
-        'rgba(78, 52, 46, 0.6)',
-      ],
-      borderColor: [
-        'rgba(54, 162, 235, 1)',
-        'rgba(255, 99, 132, 1)',
-        'rgba(255, 206, 86, 1)',
-        'rgba(75, 192, 192, 1)',
-        'rgba(153, 102, 255, 1)',
-        'rgba(255, 159, 64, 1)',
-        'rgba(199, 199, 199, 1)',
-        'rgba(83, 102, 255, 1)',
-        'rgba(40, 159, 64, 1)',
-        'rgba(210, 199, 199, 1)',
-        'rgba(78, 52, 46, 1)',
-      ],
-      borderWidth: 1,
-    }]
-  };
+    const chartData = {
+      labels: filteredData.map(item => item.key),
+      datasets: [{
+        data: filteredData.map(item => item.count),
+        backgroundColor: [
+          'rgba(54, 162, 235, 0.6)',
+          'rgba(255, 99, 132, 0.6)',
+          'rgba(255, 206, 86, 0.6)',
+          'rgba(75, 192, 192, 0.6)',
+          'rgba(153, 102, 255, 0.6)',
+          'rgba(255, 159, 64, 0.6)',
+          'rgba(199, 199, 199, 0.6)',
+          'rgba(83, 102, 255, 0.6)',
+          'rgba(40, 159, 64, 0.6)',
+          'rgba(210, 199, 199, 0.6)',
+          'rgba(78, 52, 46, 0.6)',
+        ],
+        borderColor: [
+          'rgba(54, 162, 235, 1)',
+          'rgba(255, 99, 132, 1)',
+          'rgba(255, 206, 86, 1)',
+          'rgba(75, 192, 192, 1)',
+          'rgba(153, 102, 255, 1)',
+          'rgba(255, 159, 64, 1)',
+          'rgba(199, 199, 199, 1)',
+          'rgba(83, 102, 255, 1)',
+          'rgba(40, 159, 64, 1)',
+          'rgba(210, 199, 199, 1)',
+          'rgba(78, 52, 46, 1)',
+        ],
+        borderWidth: 1,
+      }]
+    };
 
-  return (
-    <div className={`chart-section ${isVisible ? 'hidden' : ''}`}>
-      <div className="chart-section-header">
-        <h3>{config.title}</h3>
-        <div className="switch-container">
-          <span className="switch-label">Hide</span>
-          <label className="switch">
-            <input
-              type="checkbox"
-              checked={isVisible}
-              onChange={onVisibilityChange}
+    return (
+      <div className={`chart-section ${isVisible ? 'hidden' : ''}`}>
+        <div className="chart-section-header">
+          <h3>{config.title}</h3>
+          <div className="switch-container">
+            <span className="switch-label">Hide</span>
+            <label className="switch">
+              <input
+                type="checkbox"
+                checked={isVisible}
+                onChange={onVisibilityChange}
+              />
+              <span className="slider"></span>
+            </label>
+          </div>
+        </div>
+        <div className="chart-section-content">
+          <div className="chart-card">
+            <ChartRenderer
+              type={config.chartType}
+              data={chartData}
+              options={config.options}
             />
-            <span className="slider"></span>
-          </label>
-        </div>
-      </div>
-      <div className="chart-section-content">
-        <div className="chart-card">
-          <ChartRenderer
-            type={config.chartType}
-            data={chartData}
-            options={config.options}
-          />
-        </div>
-        <div className="data-table">
-          <table>
-            <thead>
-              <tr>
-                <th>{config.title}</th>
-                <th>Count</th>
-                <th>Percentage</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredData.map(item => (
-                <tr key={item.key}>
-                  <td>{item.key}</td>
-                  <td>{item.count}</td>
-                  <td>{item.percentage}</td>
+          </div>
+          <div className="data-table">
+            <table>
+              <thead>
+                <tr>
+                  <th>{config.title}</th>
+                  <th>Count</th>
+                  <th>Percentage</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {filteredData.map(item => (
+                  <tr key={item.key}>
+                    <td>{item.key}</td>
+                    <td>{item.count}</td>
+                    <td>{item.percentage}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
-    </div>
-  );
+    );
+  }
+
+  return null;
 };
 
 export default ChartSection; 
