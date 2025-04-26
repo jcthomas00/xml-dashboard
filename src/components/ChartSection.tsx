@@ -150,17 +150,180 @@ export const CHART_SECTIONS: ChartSectionConfig[] = [
   }
 ];
 
+interface Detail {
+  Optionskey: string;
+  [key: string]: string | number;
+}
+
+interface DetailCollection {
+  Detail: Detail;
+}
+
+interface TableItem {
+  Detail_Collection: DetailCollection;
+}
+
+interface GroupedData {
+  issues: string[];
+  counts: number[];
+}
+
 const ChartSection: React.FC<ChartSectionProps> = ({ config, data, isVisible, onVisibilityChange }) => {
+  // Access the data directly from the root level
   const sectionData = data?.[config.dataKey];
   
   if (!sectionData) return null;
 
+  // For presenting issues, we need to handle the grouped data differently
+  if (config.name === 'presentingIssues') {
+    const groupedData = Object.entries(sectionData).reduce<Record<string, GroupedData>>((acc: Record<string, GroupedData>, [key, value]: [string, any]) => {
+      const [mainCategory, issue] = key.split(' - ');
+      if (!acc[mainCategory]) {
+        acc[mainCategory] = {
+          issues: [],
+          counts: []
+        };
+      }
+      acc[mainCategory].issues.push(issue);
+      acc[mainCategory].counts.push(value.yd);
+      return acc;
+    }, {});
+
+    const filteredGroupedData = Object.entries(groupedData).reduce<Record<string, GroupedData>>((acc: Record<string, GroupedData>, [category, data]: [string, GroupedData]) => {
+      const totalCount = data.counts.reduce((sum: number, count: number) => sum + count, 0);
+      if (totalCount > 0) {
+        acc[category] = data;
+      }
+      return acc;
+    }, {});
+
+    const allIssues = new Set<string>();
+    Object.values(filteredGroupedData).forEach((group: GroupedData) => {
+      group.issues.forEach((issue: string) => allIssues.add(issue));
+    });
+    const uniqueIssues = Array.from(allIssues);
+
+    const datasets = uniqueIssues.map((issue: string, index: number) => {
+      return {
+        label: issue,
+        data: Object.keys(filteredGroupedData).map(category => {
+          const categoryData = filteredGroupedData[category];
+          const issueIndex = categoryData.issues.indexOf(issue);
+          return issueIndex >= 0 ? categoryData.counts[issueIndex] : 0;
+        }),
+        backgroundColor: [
+          'rgba(54, 162, 235, 0.6)',
+          'rgba(255, 99, 132, 0.6)',
+          'rgba(255, 206, 86, 0.6)',
+          'rgba(75, 192, 192, 0.6)',
+          'rgba(153, 102, 255, 0.6)',
+          'rgba(255, 159, 64, 0.6)',
+          'rgba(199, 199, 199, 0.6)',
+          'rgba(83, 102, 255, 0.6)',
+          'rgba(40, 159, 64, 0.6)',
+          'rgba(210, 199, 199, 0.6)',
+          'rgba(78, 52, 46, 0.6)',
+        ][index % 11],
+        borderColor: [
+          'rgba(54, 162, 235, 1)',
+          'rgba(255, 99, 132, 1)',
+          'rgba(255, 206, 86, 1)',
+          'rgba(75, 192, 192, 1)',
+          'rgba(153, 102, 255, 1)',
+          'rgba(255, 159, 64, 1)',
+          'rgba(199, 199, 199, 1)',
+          'rgba(83, 102, 255, 1)',
+          'rgba(40, 159, 64, 1)',
+          'rgba(210, 199, 199, 1)',
+          'rgba(78, 52, 46, 1)',
+        ][index % 11],
+        borderWidth: 1,
+      };
+    });
+
+    return (
+      <div className={`chart-section ${isVisible ? 'hidden' : ''}`}>
+        <div className="chart-section-header">
+          <h3>{config.title}</h3>
+          <div className="switch-container">
+            <span className="switch-label">Hide</span>
+            <label className="switch">
+              <input
+                type="checkbox"
+                checked={isVisible}
+                onChange={onVisibilityChange}
+              />
+              <span className="slider"></span>
+            </label>
+          </div>
+        </div>
+        <div className="chart-section-content">
+          <div className="chart-card">
+            <ChartRenderer
+              type={config.chartType}
+              data={{
+                labels: Object.keys(filteredGroupedData),
+                datasets,
+              }}
+              options={config.options}
+            />
+          </div>
+          <div className="data-table">
+            {Object.entries(filteredGroupedData).map(([category, data]) => (
+              <div key={category} className="category-group">
+                <details>
+                  <summary className="category-header">
+                    <span className="category-title">{category}</span>
+                    <span className="category-total">
+                      {data.counts.reduce((sum: number, count: number) => sum + count, 0)} cases
+                    </span>
+                  </summary>
+                  <table>
+                    <thead>
+                      <tr>
+                        <th>Issue</th>
+                        <th>Count</th>
+                        <th>Percentage</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {data.issues.map((issue: string, index: number) => {
+                        const count = data.counts[index];
+                        const detail = sectionData[`${category} - ${issue}`];
+                        const percentage = detail?.ptd || '0%';
+                        return (
+                          <tr key={issue}>
+                            <td>{issue}</td>
+                            <td>{count}</td>
+                            <td>{percentage}</td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </details>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // For all other sections
+  const filteredData = Object.entries(sectionData)
+    .map(([key, value]: [string, any]) => ({
+      key,
+      count: value.yd,
+      percentage: value.ptd
+    }))
+    .filter(item => item.count !== 0)
+    .sort((a, b) => b.count - a.count);
+
   const chartData = {
-    labels: Object.keys(sectionData).filter(key => sectionData[key][config.countLabel] !== 0),
+    labels: filteredData.map(item => item.key),
     datasets: [{
-      data: Object.values(sectionData)
-        .filter((item: any) => item[config.countLabel] !== 0)
-        .map((item: any) => item[config.countLabel]),
+      data: filteredData.map(item => item.count),
       backgroundColor: [
         'rgba(54, 162, 235, 0.6)',
         'rgba(255, 99, 132, 0.6)',
@@ -225,15 +388,13 @@ const ChartSection: React.FC<ChartSectionProps> = ({ config, data, isVisible, on
               </tr>
             </thead>
             <tbody>
-              {Object.entries(sectionData)
-                .filter(([_, value]) => (value as any)[config.countLabel] !== 0)
-                .map(([key, value]) => (
-                  <tr key={key}>
-                    <td>{key}</td>
-                    <td>{(value as any)[config.countLabel]}</td>
-                    <td>{(value as any)[config.percentageLabel]}</td>
-                  </tr>
-                ))}
+              {filteredData.map(item => (
+                <tr key={item.key}>
+                  <td>{item.key}</td>
+                  <td>{item.count}</td>
+                  <td>{item.percentage}</td>
+                </tr>
+              ))}
             </tbody>
           </table>
         </div>
