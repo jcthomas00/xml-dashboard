@@ -228,7 +228,29 @@ export const CHART_SECTIONS: ChartSectionConfig[] = [
         }
       }
     }
-  }
+  },
+  {
+    name: 'priorEAP',
+    title: 'Prior EAP Usage',
+    chartType: 'doughnut',
+    dataKey: 'priorEAP',
+    countLabel: 'YD_',
+    percentageLabel: 'PTD_2',
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: {
+          position: 'bottom',
+          labels: {
+            boxWidth: 20,
+            padding: 15,
+            font: { size: 12 }
+          }
+        }
+      }
+    }
+  },
 ];
 
 interface Detail {
@@ -711,6 +733,91 @@ const ChartSection: React.FC<ChartSectionProps> = ({ config, data, isVisible, on
                     <td>{item.key}</td>
                     <td>{item.count}</td>
                     <td>{item.percentage}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // For priorEAP section
+  if (config.name === 'priorEAP' && data?.priorEAP) {
+    const filteredData = Object.entries(data.priorEAP)
+      .map(([key, value]: [string, any]) => ({
+        key,
+        count: value.yd,
+        percentage: value.ptd,
+        ytd: value.ytd
+      }))
+      .filter(item => item.count !== 0)
+      .sort((a, b) => b.count - a.count);
+
+    const chartData = {
+      labels: filteredData.map(item => item.key),
+      datasets: [{
+        data: filteredData.map(item => item.count),
+        backgroundColor: [
+          'rgba(54, 162, 235, 0.6)',
+          'rgba(255, 99, 132, 0.6)',
+          'rgba(255, 206, 86, 0.6)',
+          'rgba(75, 192, 192, 0.6)',
+          'rgba(153, 102, 255, 0.6)',
+        ],
+        borderColor: [
+          'rgba(54, 162, 235, 1)',
+          'rgba(255, 99, 132, 1)',
+          'rgba(255, 206, 86, 1)',
+          'rgba(75, 192, 192, 1)',
+          'rgba(153, 102, 255, 1)',
+        ],
+        borderWidth: 1,
+      }]
+    };
+
+    return (
+      <div className={`chart-section ${isVisible ? 'hidden' : ''}`}>
+        <div className="chart-section-header">
+          <h3>{config.title}</h3>
+          <div className="switch-container">
+            <span className="switch-label">Hide</span>
+            <label className="switch">
+              <input
+                type="checkbox"
+                checked={isVisible}
+                onChange={onVisibilityChange}
+              />
+              <span className="slider"></span>
+            </label>
+          </div>
+        </div>
+        <div className="chart-section-content">
+          <div className="chart-card">
+            <ChartRenderer
+              type={config.chartType}
+              data={chartData}
+              options={config.options}
+            />
+          </div>
+          <div className="data-table">
+            <table>
+              <thead>
+                <tr>
+                  <th>Usage</th>
+                  <th>Count</th>
+                  <th>Percentage</th>
+                  <th>Year to Date</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filteredData.map(item => (
+                  <tr key={item.key}>
+                    <td>{item.key}</td>
+                    <td>{item.count}</td>
+                    <td>{item.percentage}</td>
+                    <td>{item.ytd}</td>
                   </tr>
                 ))}
               </tbody>

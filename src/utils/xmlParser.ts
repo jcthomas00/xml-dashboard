@@ -41,6 +41,7 @@ export interface DashboardData {
     };
   };
   awareEAP?: Record<string, { yd: number; ptd: string }>;
+  priorEAP?: Record<string, { yd: number; ptd: string; ytd: string }>;
 }
 
 export const parseXMLData = (xmlString: string): Promise<DashboardData> => {
@@ -83,7 +84,8 @@ export const parseXMLData = (xmlString: string): Promise<DashboardData> => {
           division: {},
           age: {},
           referredBy: {},
-          workStatus: {}
+          workStatus: {},
+          priorEAP: {}
         };
 
         // Parse utilization rate data
@@ -313,6 +315,30 @@ export const parseXMLData = (xmlString: string): Promise<DashboardData> => {
             return acc;
           }, {});
           data.awareEAP = awareEAPData;
+        }
+
+        // Parse PriorEAP data
+        if (report.PriorEAP?.Report?.table1?.table1_Optionskey_Collection?.table1_Optionskey) {
+          const options = Array.isArray(report.PriorEAP.Report.table1.table1_Optionskey_Collection.table1_Optionskey)
+            ? report.PriorEAP.Report.table1.table1_Optionskey_Collection.table1_Optionskey
+            : [report.PriorEAP.Report.table1.table1_Optionskey_Collection.table1_Optionskey];
+
+          const priorEAPData = options.reduce((acc: any, item: any) => {
+            if (item.Detail_Collection?.Detail) {
+              const detail = Array.isArray(item.Detail_Collection.Detail)
+                ? item.Detail_Collection.Detail[0]
+                : item.Detail_Collection.Detail;
+              if (detail.Optionskey !== "Data Not Available") {
+                acc[detail.Optionskey] = {
+                  yd: parseInt(detail.YD_) || 0,
+                  ptd: detail.PTD_2 || '0%',
+                  ytd: detail.YTD_ || '0%'
+                };
+              }
+            }
+            return acc;
+          }, {});
+          data.priorEAP = priorEAPData;
         }
 
         resolve(data);
