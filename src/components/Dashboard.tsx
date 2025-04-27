@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState } from 'react';
 import FileUpload from './FileUpload';
 import { parseXMLData } from '../utils/xmlParser';
 import '../styles/Dashboard.css';
@@ -7,12 +7,6 @@ import ChartSection, { CHART_SECTIONS } from './ChartSection';
 
 // Register the CategoryScale
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend, ArcElement);
-
-interface EducationItem {
-  label: string;
-  yd: number;
-  ptd: string;
-}
 
 interface ChartVisibility {
   [key: string]: boolean;
@@ -103,16 +97,24 @@ const Dashboard: React.FC = () => {
           <p>{data?.totalClients || 0}</p>
         </div>
         <div className="stat-card">
-          <h3>Total Cases</h3>
+          <h3>Total New Cases</h3>
           <p>{data?.totalCases || 0}</p>
         </div>
         <div className="stat-card">
-          <h3>EAP Cases</h3>
+          <h3>New EAP Cases</h3>
           <p>{data?.caseTypes?.eap?.ytd || 0}</p>
         </div>
         <div className="stat-card">
-          <h3>Worklife Cases</h3>
+          <h3>EAP Cases Closed</h3>
+          <p>{data?.casesClosed?.eap?.pd || 0}</p>
+        </div>
+        <div className="stat-card">
+          <h3>New Worklife Cases</h3>
           <p>{data?.caseTypes?.worklife?.ytd || 0}</p>
+        </div>
+        <div className="stat-card">
+          <h3>Worklife Cases Closed</h3>
+          <p>{data?.casesClosed?.worklife?.pd || 0}</p>
         </div>
         <div className="stat-card utilization-card">
           <h3>Utilization Rate</h3>
