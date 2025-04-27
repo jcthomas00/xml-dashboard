@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import FileUpload from './FileUpload';
-import { parseXMLData } from '../utils/xmlParser';
+import { parseXMLData, DashboardData } from '../utils/xmlParser';
 import '../styles/Dashboard.css';
 import { Chart as ChartJS, ArcElement, Tooltip, Legend, CategoryScale, LinearScale, PointElement, LineElement, Title } from 'chart.js';
 import ChartSection, { CHART_SECTIONS } from './ChartSection';
@@ -13,9 +13,10 @@ interface ChartVisibility {
 }
 
 const Dashboard: React.FC = () => {
-  const [data, setData] = useState<any>(null);
-  const [loading, setLoading] = useState<boolean>(true);
+  const [data, setData] = useState<DashboardData | null>(null);
+  const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
+  const [periodText, setPeriodText] = useState<string>("Client Company | Period: 01-01-2025 - 01-31-2025");
   const [chartVisibility, setChartVisibility] = useState<ChartVisibility>(
     CHART_SECTIONS.reduce((acc, section) => {
       acc[section.name] = false;
@@ -80,15 +81,23 @@ const Dashboard: React.FC = () => {
 
   return (
     <div className="dashboard-container">
-      <FileUpload onFileUpload={handleFileUpload} />
-      
       <div className="dashboard-header">
-        <h1>Dashboard</h1>
-        <div className="button-group">
+        <div className="button-group no-print">
+          <FileUpload onFileUpload={handleFileUpload} />
           <button className="print-button" onClick={() => window.print()}>
             Print as PDF
           </button>
         </div>
+        <div className="title-row">
+          <img src="https://www.uth.edu/uteap/assets/img/logo.jpg" alt="UTEAP Logo" className="uteap-logo" />
+          <h1>UTEAP Client Services Report</h1>
+        </div>
+        <input 
+          type="text" 
+          className="period-input" 
+          value={periodText}
+          onChange={(e) => setPeriodText(e.target.value)}
+        />
       </div>
 
       <div className="statistics-grid">
