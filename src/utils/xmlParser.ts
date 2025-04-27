@@ -64,7 +64,6 @@ export const parseXMLData = (xmlString: string): Promise<DashboardData> => {
       }
 
       const report = result.Report;
-      console.log('Parsed XML structure:', JSON.stringify(report, null, 2));
 
       try {
         const data: DashboardData = {
@@ -316,7 +315,6 @@ export const parseXMLData = (xmlString: string): Promise<DashboardData> => {
           data.awareEAP = awareEAPData;
         }
 
-        console.log('Final parsed data:', data);
         resolve(data);
       } catch (error) {
         console.error('Error processing XML data:', error);

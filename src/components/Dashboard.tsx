@@ -61,11 +61,9 @@ const Dashboard: React.FC = () => {
 
   const formatChartData = (rawData: any, type: 'pie' | 'bar') => {
     if (!rawData) {
-      console.log(`No data available for ${type} chart`);
       return undefined;
     }
 
-    console.log(`Formatting ${type} chart data:`, rawData);
     const labels = Object.keys(rawData);
     const values = Object.values(rawData).map((item: any) => parseFloat(item.ptd));
 
@@ -78,7 +76,6 @@ const Dashboard: React.FC = () => {
           : '#36A2EB'
       }]
     };
-    console.log(`Formatted ${type} chart data:`, chartData);
     return chartData;
   };
 

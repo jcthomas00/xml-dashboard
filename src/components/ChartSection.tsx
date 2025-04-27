@@ -276,20 +276,11 @@ const ChartSection: React.FC<ChartSectionProps> = ({ config, data, isVisible, on
 
   // For urgency section, we need to handle the XML structure
   if (config.name === 'urgency') {
-    console.log('Checking Urgency data:', {
-      hasData: !!data,
-      hasUrgency: !!data?.Urgency,
-      urgencyData: data?.Urgency
-    });
-
     if (data?.Urgency) {
       const urgencyData = data.Urgency as UrgencyData;
       const details = urgencyData?.Report?.Tablix3?.Details_Collection?.Details;
       
-      console.log('Urgency details:', details);
-      
       if (!details) {
-        console.log('No details found in Urgency data');
         return null;
       }
 
@@ -302,8 +293,6 @@ const ChartSection: React.FC<ChartSectionProps> = ({ config, data, isVisible, on
         }))
         .filter(item => item.count !== 0)
         .sort((a, b) => b.count - a.count);
-
-      console.log('Filtered Urgency data:', filteredData);
 
       const chartData = {
         labels: filteredData.map(item => item.key),
