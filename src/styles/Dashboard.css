@@ -36,9 +36,28 @@
 
 .statistics-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  grid-template-columns: repeat(4, 1fr);
   gap: 20px;
   margin-bottom: 30px;
+}
+
+/* First line: Total Clients | Total Cases */
+.stat-card:nth-child(1),
+.stat-card:nth-child(2) {
+  grid-column: span 2;
+}
+
+/* Second line: 4 cards */
+.stat-card:nth-child(3),
+.stat-card:nth-child(4),
+.stat-card:nth-child(5),
+.stat-card:nth-child(6) {
+  grid-column: span 1;
+}
+
+/* Third line: Utilization Rate */
+.utilization-card {
+  grid-column: 1 / -1;
 }
 
 .stat-card {
@@ -60,11 +79,6 @@
   font-size: 2rem;
   font-weight: bold;
   color: #2c3e50;
-}
-
-.utilization-card {
-  grid-column: span 2;
-  text-align: left;
 }
 
 .utilization-details {
@@ -211,6 +225,10 @@
   .statistics-grid {
     grid-template-columns: 1fr;
   }
+  
+  .stat-card:nth-child(n) {
+    grid-column: 1;
+  }
 
   .chart-section {
     flex-direction: column;
@@ -322,50 +340,91 @@
 
 /* Print-specific styles */
 @media print {
-  @page {
-    size: portrait;
+  .dashboard-container {
+    padding: 0;
+    max-width: none;
   }
 
   .no-print {
-    display: none !important;
+    display: none;
   }
 
   .chart-section.hidden {
-    display: none !important;
+    display: none;
   }
 
   canvas {
-    margin: 0 auto;
+    max-width: 100% !important;
+    height: auto !important;
   }
 
   .chart-section {
+    break-inside: avoid;
     page-break-inside: avoid;
+    margin-bottom: 20px;
   }
 
   .chart-section-content {
-    display: flex;
     flex-direction: row;
-    justify-content: space-between;
-    overflow-x: show;
+    gap: 20px;
   }
 
   .chart-card {
-    width: 40%;
-    flex-grow: 0;
-    min-width: 50%;
-    align-items: center;
-    display: flex;
+    flex: 1;
+    min-width: 0;
   }
 
   .data-table {
-    width: 50%;
-    min-width: unset !important;
+    flex: 1;
+    min-width: 0;
   }
 
   .chart-card canvas {
-    max-width: 100%;
-    aspect-ratio: 1;
-    object-fit: contain;
+    width: 100% !important;
+    height: auto !important;
+  }
+
+  .statistics-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+    margin-bottom: 20px;
+  }
+
+  .stat-card {
+    break-inside: avoid;
+    page-break-inside: avoid;
+    padding: 15px;
+    box-shadow: none;
+    border: 1px solid #ddd;
+  }
+
+  .stat-card h3 {
+    font-size: 1rem;
+    margin-bottom: 5px;
+  }
+
+  .stat-card p {
+    font-size: 1.5rem;
+  }
+
+  /* First line: Total Clients | Total Cases */
+  .stat-card:nth-child(1),
+  .stat-card:nth-child(2) {
+    grid-column: span 2;
+  }
+
+  /* Second line: 4 cards */
+  .stat-card:nth-child(3),
+  .stat-card:nth-child(4),
+  .stat-card:nth-child(5),
+  .stat-card:nth-child(6) {
+    grid-column: span 1;
+  }
+
+  /* Third line: Utilization Rate */
+  .utilization-card, .stat-card:nth-child(7) {
+    grid-column: 1 / -1;
   }
 }
 
