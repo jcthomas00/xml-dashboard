@@ -278,6 +278,33 @@ export const CHART_SECTIONS: ChartSectionConfig[] = [
       }
     }
   },
+  {
+    name: 'ethnicity',
+    title: 'Ethnic Background',
+    chartType: 'bar',
+    dataKey: 'ethnicity',
+    countLabel: 'YD_',
+    percentageLabel: 'PTD_',
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      scales: {
+        y: {
+          beginAtZero: true,
+          title: {
+            display: true,
+            text: 'Number of Clients'
+          }
+        },
+        x: {
+          title: {
+            display: true,
+            text: 'Ethnic Background'
+          }
+        }
+      }
+    }
+  },
 ];
 
 interface Detail {
@@ -900,6 +927,77 @@ const ChartSection: React.FC<ChartSectionProps> = ({ config, data, isVisible, on
               <thead>
                 <tr>
                   <th>Marital Status</th>
+                  <th>Count</th>
+                  <th>Percentage</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filteredData.map(item => (
+                  <tr key={item.key}>
+                    <td>{item.key}</td>
+                    <td>{item.count}</td>
+                    <td>{item.percentage}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // For ethnicity section
+  if (config.name === 'ethnicity' && data?.ethnicity) {
+    const filteredData = Object.entries(data.ethnicity)
+      .map(([key, value]: [string, any]) => ({
+        key,
+        count: value.yd,
+        percentage: value.ptd
+      }))
+      .filter(item => item.count !== 0)
+      .sort((a, b) => b.count - a.count);
+
+    const chartData = {
+      labels: filteredData.map(item => item.key),
+      datasets: [{
+        label: 'Number of Clients',
+        data: filteredData.map(item => item.count),
+        backgroundColor: 'rgba(54, 162, 235, 0.6)',
+        borderColor: 'rgba(54, 162, 235, 1)',
+        borderWidth: 1,
+      }]
+    };
+
+    return (
+      <div className={`chart-section ${isVisible ? 'hidden' : ''}`}>
+        <div className="chart-section-header">
+          <h3>{config.title}</h3>
+          <div className="switch-container">
+            <span className="switch-label">Hide</span>
+            <label className="switch">
+              <input
+                type="checkbox"
+                checked={isVisible}
+                onChange={onVisibilityChange}
+              />
+              <span className="slider"></span>
+            </label>
+          </div>
+        </div>
+        <div className="chart-section-content">
+          <div className="chart-card">
+            <ChartRenderer
+              type={config.chartType}
+              data={chartData}
+              options={config.options}
+            />
+          </div>
+          <div className="data-table">
+            <table>
+              <thead>
+                <tr>
+                  <th>Ethnic Background</th>
                   <th>Count</th>
                   <th>Percentage</th>
                 </tr>

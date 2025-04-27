@@ -43,6 +43,7 @@ export interface DashboardData {
   awareEAP?: Record<string, { yd: number; ptd: string }>;
   priorEAP?: Record<string, { yd: number; ptd: string; ytd: string }>;
   maritalStatus?: Record<string, { yd: number; ptd: string; ytd: string }>;
+  ethnicity?: Record<string, { yd: number; ptd: string; ytd: string }>;
 }
 
 export const parseXMLData = (xmlString: string): Promise<DashboardData> => {
@@ -87,7 +88,8 @@ export const parseXMLData = (xmlString: string): Promise<DashboardData> => {
           referredBy: {},
           workStatus: {},
           priorEAP: {},
-          maritalStatus: {}
+          maritalStatus: {},
+          ethnicity: {}
         };
 
         // Parse utilization rate data
@@ -365,6 +367,30 @@ export const parseXMLData = (xmlString: string): Promise<DashboardData> => {
             return acc;
           }, {});
           data.maritalStatus = maritalStatusData;
+        }
+
+        // Parse ethnicity data
+        if (report.Ethnicity?.Report?.table1?.table1_Optionskey_Collection?.table1_Optionskey) {
+          const options = Array.isArray(report.Ethnicity.Report.table1.table1_Optionskey_Collection.table1_Optionskey)
+            ? report.Ethnicity.Report.table1.table1_Optionskey_Collection.table1_Optionskey
+            : [report.Ethnicity.Report.table1.table1_Optionskey_Collection.table1_Optionskey];
+
+          const ethnicityData = options.reduce((acc: any, item: any) => {
+            if (item.Detail_Collection?.Detail) {
+              const detail = Array.isArray(item.Detail_Collection.Detail)
+                ? item.Detail_Collection.Detail[0]
+                : item.Detail_Collection.Detail;
+              if (detail.Optionskey !== "Data Not Available") {
+                acc[detail.Optionskey] = {
+                  yd: parseInt(detail.YD_) || 0,
+                  ptd: detail.PTD_ || '0%',
+                  ytd: detail.YTD_ || '0%'
+                };
+              }
+            }
+            return acc;
+          }, {});
+          data.ethnicity = ethnicityData;
         }
 
         resolve(data);
