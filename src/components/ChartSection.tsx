@@ -251,6 +251,33 @@ export const CHART_SECTIONS: ChartSectionConfig[] = [
       }
     }
   },
+  {
+    name: 'maritalStatus',
+    title: 'Marital Status',
+    chartType: 'bar',
+    dataKey: 'maritalStatus',
+    countLabel: 'YD_',
+    percentageLabel: 'PTD_',
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      scales: {
+        y: {
+          beginAtZero: true,
+          title: {
+            display: true,
+            text: 'Number of Clients'
+          }
+        },
+        x: {
+          title: {
+            display: true,
+            text: 'Marital Status'
+          }
+        }
+      }
+    }
+  },
 ];
 
 interface Detail {
@@ -310,8 +337,7 @@ const ChartSection: React.FC<ChartSectionProps> = ({ config, data, isVisible, on
         .map(item => ({
           key: item.Optionskey1,
           count: parseInt(item.PD_1),
-          percentage: item.Textbox24,
-          ytd: item.Textbox44
+          percentage: item.Textbox24
         }))
         .filter(item => item.count !== 0)
         .sort((a, b) => b.count - a.count);
@@ -369,7 +395,6 @@ const ChartSection: React.FC<ChartSectionProps> = ({ config, data, isVisible, on
                     <th>Urgency Level</th>
                     <th>Count</th>
                     <th>Percentage</th>
-                    <th>Year to Date</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -378,7 +403,6 @@ const ChartSection: React.FC<ChartSectionProps> = ({ config, data, isVisible, on
                       <td>{item.key}</td>
                       <td>{item.count}</td>
                       <td>{item.percentage}</td>
-                      <td>{item.ytd}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -749,8 +773,7 @@ const ChartSection: React.FC<ChartSectionProps> = ({ config, data, isVisible, on
       .map(([key, value]: [string, any]) => ({
         key,
         count: value.yd,
-        percentage: value.ptd,
-        ytd: value.ytd
+        percentage: value.ptd
       }))
       .filter(item => item.count !== 0)
       .sort((a, b) => b.count - a.count);
@@ -808,7 +831,6 @@ const ChartSection: React.FC<ChartSectionProps> = ({ config, data, isVisible, on
                   <th>Usage</th>
                   <th>Count</th>
                   <th>Percentage</th>
-                  <th>Year to Date</th>
                 </tr>
               </thead>
               <tbody>
@@ -817,7 +839,77 @@ const ChartSection: React.FC<ChartSectionProps> = ({ config, data, isVisible, on
                     <td>{item.key}</td>
                     <td>{item.count}</td>
                     <td>{item.percentage}</td>
-                    <td>{item.ytd}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // For maritalStatus section
+  if (config.name === 'maritalStatus' && data?.maritalStatus) {
+    const filteredData = Object.entries(data.maritalStatus)
+      .map(([key, value]: [string, any]) => ({
+        key,
+        count: value.yd,
+        percentage: value.ptd
+      }))
+      .filter(item => item.count !== 0)
+      .sort((a, b) => b.count - a.count);
+
+    const chartData = {
+      labels: filteredData.map(item => item.key),
+      datasets: [{
+        label: 'Number of Clients',
+        data: filteredData.map(item => item.count),
+        backgroundColor: 'rgba(54, 162, 235, 0.6)',
+        borderColor: 'rgba(54, 162, 235, 1)',
+        borderWidth: 1,
+      }]
+    };
+
+    return (
+      <div className={`chart-section ${isVisible ? 'hidden' : ''}`}>
+        <div className="chart-section-header">
+          <h3>{config.title}</h3>
+          <div className="switch-container">
+            <span className="switch-label">Hide</span>
+            <label className="switch">
+              <input
+                type="checkbox"
+                checked={isVisible}
+                onChange={onVisibilityChange}
+              />
+              <span className="slider"></span>
+            </label>
+          </div>
+        </div>
+        <div className="chart-section-content">
+          <div className="chart-card">
+            <ChartRenderer
+              type={config.chartType}
+              data={chartData}
+              options={config.options}
+            />
+          </div>
+          <div className="data-table">
+            <table>
+              <thead>
+                <tr>
+                  <th>Marital Status</th>
+                  <th>Count</th>
+                  <th>Percentage</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filteredData.map(item => (
+                  <tr key={item.key}>
+                    <td>{item.key}</td>
+                    <td>{item.count}</td>
+                    <td>{item.percentage}</td>
                   </tr>
                 ))}
               </tbody>
