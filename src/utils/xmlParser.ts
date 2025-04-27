@@ -40,6 +40,7 @@ export interface DashboardData {
       };
     };
   };
+  awareEAP?: Record<string, { yd: number; ptd: string }>;
 }
 
 export const parseXMLData = (xmlString: string): Promise<DashboardData> => {
@@ -290,6 +291,29 @@ export const parseXMLData = (xmlString: string): Promise<DashboardData> => {
               }
             }
           };
+        }
+
+        // Parse AwareEAP data
+        if (report.AwareEAP?.Report?.table1?.table1_Optionskey_Collection?.table1_Optionskey) {
+          const options = Array.isArray(report.AwareEAP.Report.table1.table1_Optionskey_Collection.table1_Optionskey)
+            ? report.AwareEAP.Report.table1.table1_Optionskey_Collection.table1_Optionskey
+            : [report.AwareEAP.Report.table1.table1_Optionskey_Collection.table1_Optionskey];
+
+          const awareEAPData = options.reduce((acc: any, item: any) => {
+            if (item.Detail_Collection?.Detail) {
+              const detail = Array.isArray(item.Detail_Collection.Detail)
+                ? item.Detail_Collection.Detail[0]
+                : item.Detail_Collection.Detail;
+              if (detail.Optionskey !== "Data Not Available") {
+                acc[detail.Optionskey] = {
+                  yd: parseInt(detail.PD_) || 0,
+                  ptd: detail.PTD_ || '0'
+                };
+              }
+            }
+            return acc;
+          }, {});
+          data.awareEAP = awareEAPData;
         }
 
         console.log('Final parsed data:', data);
