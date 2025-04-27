@@ -77,7 +77,7 @@
 }
 
 .stat-card {
-  background: white;
+  background: #faf0e1;
   padding: 20px;
   border-radius: 8px;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
@@ -380,14 +380,20 @@
   .dashboard-container {
     padding: 0;
     max-width: none;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
   }
 
   .no-print {
     display: none;
   }
 
+  .switch-container {
+    display: none !important;
+  }
+
   .chart-section.hidden {
-    display: none;
+    display: none !important;
   }
 
   canvas {
@@ -399,10 +405,9 @@
     break-inside: avoid;
     page-break-inside: avoid;
     margin-bottom: 20px;
-
-    .switch-container {
-      display: none;
-    }
+    background-color: #f8f9fa !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
   }
 
   .chart-section-content {
@@ -433,6 +438,9 @@
   }
 
   .stat-card {
+    background-color: #faf0e1 !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
     break-inside: avoid;
     page-break-inside: avoid;
     padding: 15px;

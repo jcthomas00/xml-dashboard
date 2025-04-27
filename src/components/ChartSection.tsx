@@ -2,6 +2,51 @@ import React from 'react';
 import ChartRenderer from './ChartRenderer';
 import { ChartType } from 'chart.js';
 
+// Theme configuration
+interface Theme {
+  colors: {
+    primary: string[];
+    border: string[];
+    hover: string[];
+  };
+  options: {
+    borderWidth: number;
+    hoverBorderWidth: number;
+  };
+}
+
+const warmTheme: Theme = {
+  colors: {
+    primary: [
+      'rgba(0, 94, 32, 0.6)',     // #005e20
+      'rgba(255, 193, 37, 0.6)',  // #ffc125
+      'rgba(205, 198, 115, 0.6)', // #cdc673
+      'rgba(255, 235, 205, 0.6)', // #ffebcd
+      'rgba(91, 47, 19, 0.6)',    // #5b2f13
+    ],
+    border: [
+      'rgba(0, 94, 32, 1)',
+      'rgba(255, 193, 37, 1)',
+      'rgba(205, 198, 115, 1)',
+      'rgba(255, 235, 205, 1)',
+      'rgba(91, 47, 19, 1)',
+    ],
+    hover: [
+      'rgba(0, 94, 32, 0.8)',
+      'rgba(255, 193, 37, 0.8)',
+      'rgba(205, 198, 115, 0.8)',
+      'rgba(255, 235, 205, 0.8)',
+      'rgba(91, 47, 19, 0.8)',
+    ],
+  },
+  options: {
+    borderWidth: 1,
+    hoverBorderWidth: 2,
+  },
+};
+
+const currentTheme = warmTheme;
+
 export interface ChartSectionConfig {
   name: string;
   title: string;
@@ -373,21 +418,11 @@ const ChartSection: React.FC<ChartSectionProps> = ({ config, data, isVisible, on
         labels: filteredData.map(item => item.key),
         datasets: [{
           data: filteredData.map(item => item.count),
-          backgroundColor: [
-            'rgba(54, 162, 235, 0.6)',
-            'rgba(255, 99, 132, 0.6)',
-            'rgba(255, 206, 86, 0.6)',
-            'rgba(75, 192, 192, 0.6)',
-            'rgba(153, 102, 255, 0.6)',
-          ],
-          borderColor: [
-            'rgba(54, 162, 235, 1)',
-            'rgba(255, 99, 132, 1)',
-            'rgba(255, 206, 86, 1)',
-            'rgba(75, 192, 192, 1)',
-            'rgba(153, 102, 255, 1)',
-          ],
-          borderWidth: 1,
+          backgroundColor: currentTheme.colors.primary,
+          borderColor: currentTheme.colors.border,
+          borderWidth: currentTheme.options.borderWidth,
+          hoverBackgroundColor: currentTheme.colors.hover,
+          hoverBorderWidth: currentTheme.options.hoverBorderWidth,
         }]
       };
 
@@ -459,9 +494,11 @@ const ChartSection: React.FC<ChartSectionProps> = ({ config, data, isVisible, on
       datasets: [{
         label: 'Number of Cases',
         data: filteredData.map(item => item.count),
-        backgroundColor: 'rgba(54, 162, 235, 0.6)',
-        borderColor: 'rgba(54, 162, 235, 1)',
-        borderWidth: 1,
+        backgroundColor: currentTheme.colors.primary,
+        borderColor: currentTheme.colors.border,
+        borderWidth: currentTheme.options.borderWidth,
+        hoverBackgroundColor: currentTheme.colors.hover,
+        hoverBorderWidth: currentTheme.options.hoverBorderWidth,
       }]
     };
 
@@ -532,9 +569,11 @@ const ChartSection: React.FC<ChartSectionProps> = ({ config, data, isVisible, on
       datasets: [{
         label: 'Number of Clients',
         data: filteredData.map(item => item.count),
-        backgroundColor: 'rgba(54, 162, 235, 0.6)',
-        borderColor: 'rgba(54, 162, 235, 1)',
-        borderWidth: 1,
+        backgroundColor: currentTheme.colors.primary,
+        borderColor: currentTheme.colors.border,
+        borderWidth: currentTheme.options.borderWidth,
+        hoverBackgroundColor: currentTheme.colors.hover,
+        hoverBorderWidth: currentTheme.options.hoverBorderWidth,
       }]
     };
 
@@ -624,33 +663,11 @@ const ChartSection: React.FC<ChartSectionProps> = ({ config, data, isVisible, on
           const issueIndex = categoryData.issues.indexOf(issue);
           return issueIndex >= 0 ? categoryData.counts[issueIndex] : 0;
         }),
-        backgroundColor: [
-          'rgba(54, 162, 235, 0.6)',
-          'rgba(255, 99, 132, 0.6)',
-          'rgba(255, 206, 86, 0.6)',
-          'rgba(75, 192, 192, 0.6)',
-          'rgba(153, 102, 255, 0.6)',
-          'rgba(255, 159, 64, 0.6)',
-          'rgba(199, 199, 199, 0.6)',
-          'rgba(83, 102, 255, 0.6)',
-          'rgba(40, 159, 64, 0.6)',
-          'rgba(210, 199, 199, 0.6)',
-          'rgba(78, 52, 46, 0.6)',
-        ][index % 11],
-        borderColor: [
-          'rgba(54, 162, 235, 1)',
-          'rgba(255, 99, 132, 1)',
-          'rgba(255, 206, 86, 1)',
-          'rgba(75, 192, 192, 1)',
-          'rgba(153, 102, 255, 1)',
-          'rgba(255, 159, 64, 1)',
-          'rgba(199, 199, 199, 1)',
-          'rgba(83, 102, 255, 1)',
-          'rgba(40, 159, 64, 1)',
-          'rgba(210, 199, 199, 1)',
-          'rgba(78, 52, 46, 1)',
-        ][index % 11],
-        borderWidth: 1,
+        backgroundColor: currentTheme.colors.primary[index % 5],
+        borderColor: currentTheme.colors.border[index % 5],
+        borderWidth: currentTheme.options.borderWidth,
+        hoverBackgroundColor: currentTheme.colors.hover[index % 5],
+        hoverBorderWidth: currentTheme.options.hoverBorderWidth,
       };
     });
 
@@ -739,9 +756,11 @@ const ChartSection: React.FC<ChartSectionProps> = ({ config, data, isVisible, on
       datasets: [{
         label: 'Number of Clients',
         data: filteredData.map(item => item.count),
-        backgroundColor: 'rgba(54, 162, 235, 0.6)',
-        borderColor: 'rgba(54, 162, 235, 1)',
-        borderWidth: 1,
+        backgroundColor: currentTheme.colors.primary,
+        borderColor: currentTheme.colors.border,
+        borderWidth: currentTheme.options.borderWidth,
+        hoverBackgroundColor: currentTheme.colors.hover,
+        hoverBorderWidth: currentTheme.options.hoverBorderWidth,
       }]
     };
 
@@ -809,21 +828,11 @@ const ChartSection: React.FC<ChartSectionProps> = ({ config, data, isVisible, on
       labels: filteredData.map(item => item.key),
       datasets: [{
         data: filteredData.map(item => item.count),
-        backgroundColor: [
-          'rgba(54, 162, 235, 0.6)',
-          'rgba(255, 99, 132, 0.6)',
-          'rgba(255, 206, 86, 0.6)',
-          'rgba(75, 192, 192, 0.6)',
-          'rgba(153, 102, 255, 0.6)',
-        ],
-        borderColor: [
-          'rgba(54, 162, 235, 1)',
-          'rgba(255, 99, 132, 1)',
-          'rgba(255, 206, 86, 1)',
-          'rgba(75, 192, 192, 1)',
-          'rgba(153, 102, 255, 1)',
-        ],
-        borderWidth: 1,
+        backgroundColor: currentTheme.colors.primary,
+        borderColor: currentTheme.colors.border,
+        borderWidth: currentTheme.options.borderWidth,
+        hoverBackgroundColor: currentTheme.colors.hover,
+        hoverBorderWidth: currentTheme.options.hoverBorderWidth,
       }]
     };
 
@@ -892,9 +901,11 @@ const ChartSection: React.FC<ChartSectionProps> = ({ config, data, isVisible, on
       datasets: [{
         label: 'Number of Clients',
         data: filteredData.map(item => item.count),
-        backgroundColor: 'rgba(54, 162, 235, 0.6)',
-        borderColor: 'rgba(54, 162, 235, 1)',
-        borderWidth: 1,
+        backgroundColor: currentTheme.colors.primary,
+        borderColor: currentTheme.colors.border,
+        borderWidth: currentTheme.options.borderWidth,
+        hoverBackgroundColor: currentTheme.colors.hover,
+        hoverBorderWidth: currentTheme.options.hoverBorderWidth,
       }]
     };
 
@@ -963,9 +974,11 @@ const ChartSection: React.FC<ChartSectionProps> = ({ config, data, isVisible, on
       datasets: [{
         label: 'Number of Clients',
         data: filteredData.map(item => item.count),
-        backgroundColor: 'rgba(54, 162, 235, 0.6)',
-        borderColor: 'rgba(54, 162, 235, 1)',
-        borderWidth: 1,
+        backgroundColor: currentTheme.colors.primary,
+        borderColor: currentTheme.colors.border,
+        borderWidth: currentTheme.options.borderWidth,
+        hoverBackgroundColor: currentTheme.colors.hover,
+        hoverBorderWidth: currentTheme.options.hoverBorderWidth,
       }]
     };
 
@@ -1033,33 +1046,11 @@ const ChartSection: React.FC<ChartSectionProps> = ({ config, data, isVisible, on
       labels: filteredData.map(item => item.key),
       datasets: [{
         data: filteredData.map(item => item.count),
-        backgroundColor: [
-          'rgba(54, 162, 235, 0.6)',
-          'rgba(255, 99, 132, 0.6)',
-          'rgba(255, 206, 86, 0.6)',
-          'rgba(75, 192, 192, 0.6)',
-          'rgba(153, 102, 255, 0.6)',
-          'rgba(255, 159, 64, 0.6)',
-          'rgba(199, 199, 199, 0.6)',
-          'rgba(83, 102, 255, 0.6)',
-          'rgba(40, 159, 64, 0.6)',
-          'rgba(210, 199, 199, 0.6)',
-          'rgba(78, 52, 46, 0.6)',
-        ],
-        borderColor: [
-          'rgba(54, 162, 235, 1)',
-          'rgba(255, 99, 132, 1)',
-          'rgba(255, 206, 86, 1)',
-          'rgba(75, 192, 192, 1)',
-          'rgba(153, 102, 255, 1)',
-          'rgba(255, 159, 64, 1)',
-          'rgba(199, 199, 199, 1)',
-          'rgba(83, 102, 255, 1)',
-          'rgba(40, 159, 64, 1)',
-          'rgba(210, 199, 199, 1)',
-          'rgba(78, 52, 46, 1)',
-        ],
-        borderWidth: 1,
+        backgroundColor: currentTheme.colors.primary,
+        borderColor: currentTheme.colors.border,
+        borderWidth: currentTheme.options.borderWidth,
+        hoverBackgroundColor: currentTheme.colors.hover,
+        hoverBorderWidth: currentTheme.options.hoverBorderWidth,
       }]
     };
 
