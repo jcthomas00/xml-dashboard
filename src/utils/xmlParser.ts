@@ -25,6 +25,21 @@ export interface DashboardData {
     yd: number;
     ytd: string;
   }[];
+  Urgency?: {
+    Report: {
+      Tablix3: {
+        Details_Collection: {
+          Details: {
+            Optionskey1: string;
+            PD_1: string;
+            Textbox24: string;
+            Textbox28: string;
+            Textbox44: string;
+          }[];
+        };
+      };
+    };
+  };
 }
 
 export const parseXMLData = (xmlString: string): Promise<DashboardData> => {
@@ -254,7 +269,30 @@ export const parseXMLData = (xmlString: string): Promise<DashboardData> => {
           }, []);
         }
 
-        console.log('Successfully parsed data:', data);
+        // Parse Urgency data
+        if (report.Urgency?.Report?.Tablix3?.Details_Collection?.Details) {
+          const details = Array.isArray(report.Urgency.Report.Tablix3.Details_Collection.Details)
+            ? report.Urgency.Report.Tablix3.Details_Collection.Details
+            : [report.Urgency.Report.Tablix3.Details_Collection.Details];
+
+          data.Urgency = {
+            Report: {
+              Tablix3: {
+                Details_Collection: {
+                  Details: details.map((detail: any) => ({
+                    Optionskey1: detail.Optionskey1,
+                    PD_1: detail.PD_1,
+                    Textbox24: detail.Textbox24,
+                    Textbox28: detail.Textbox28,
+                    Textbox44: detail.Textbox44
+                  }))
+                }
+              }
+            }
+          };
+        }
+
+        console.log('Final parsed data:', data);
         resolve(data);
       } catch (error) {
         console.error('Error processing XML data:', error);

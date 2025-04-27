@@ -152,6 +152,55 @@ export const CHART_SECTIONS: ChartSectionConfig[] = [
         }
       }
     }
+  },
+  {
+    name: 'casesOpened',
+    title: 'Cases Opened',
+    chartType: 'bar',
+    dataKey: 'CS_CasesOpened2',
+    countLabel: 'PD_',
+    percentageLabel: 'PTD_',
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      scales: {
+        y: {
+          beginAtZero: true,
+          title: {
+            display: true,
+            text: 'Number of Cases'
+          }
+        },
+        x: {
+          title: {
+            display: true,
+            text: 'Case Type'
+          }
+        }
+      }
+    }
+  },
+  {
+    name: 'urgency',
+    title: 'Urgency of the Case',
+    chartType: 'doughnut',
+    dataKey: 'Urgency',
+    countLabel: 'PD_1',
+    percentageLabel: 'Textbox24',
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: {
+          position: 'bottom',
+          labels: {
+            boxWidth: 20,
+            padding: 15,
+            font: { size: 12 }
+          }
+        }
+      }
+    }
   }
 ];
 
@@ -173,12 +222,210 @@ interface GroupedData {
   counts: number[];
 }
 
+interface UrgencyDetail {
+  Optionskey1: string;
+  PD_1: string;
+  Textbox24: string;
+  Textbox28: string;
+  Textbox44: string;
+}
+
+interface UrgencyData {
+  Report: {
+    Tablix3: {
+      Details_Collection: {
+        Details: UrgencyDetail[];
+      };
+    };
+  };
+}
+
 const ChartSection: React.FC<ChartSectionProps> = ({ config, data, isVisible, onVisibilityChange }) => {
   // Try both direct access and XML structure
   const sectionData = data?.[config.dataKey];
-  const xmlData = data?.[config.dataKey]?.Report?.table1?.table1_Optionskey_Collection?.table1_Optionskey as TableItem[];
+  const xmlData = data?.[config.dataKey]?.Report?.Tablix3?.Details_Collection?.Details as TableItem[];
   
   if (!sectionData && !xmlData) return null;
+
+  // For urgency section, we need to handle the XML structure
+  if (config.name === 'urgency') {
+    console.log('Checking Urgency data:', {
+      hasData: !!data,
+      hasUrgency: !!data?.Urgency,
+      urgencyData: data?.Urgency
+    });
+
+    if (data?.Urgency) {
+      const urgencyData = data.Urgency as UrgencyData;
+      const details = urgencyData?.Report?.Tablix3?.Details_Collection?.Details;
+      
+      console.log('Urgency details:', details);
+      
+      if (!details) {
+        console.log('No details found in Urgency data');
+        return null;
+      }
+
+      const filteredData = details
+        .map(item => ({
+          key: item.Optionskey1,
+          count: parseInt(item.PD_1),
+          percentage: item.Textbox24,
+          ytd: item.Textbox44
+        }))
+        .filter(item => item.count !== 0)
+        .sort((a, b) => b.count - a.count);
+
+      console.log('Filtered Urgency data:', filteredData);
+
+      const chartData = {
+        labels: filteredData.map(item => item.key),
+        datasets: [{
+          data: filteredData.map(item => item.count),
+          backgroundColor: [
+            'rgba(54, 162, 235, 0.6)',
+            'rgba(255, 99, 132, 0.6)',
+            'rgba(255, 206, 86, 0.6)',
+            'rgba(75, 192, 192, 0.6)',
+            'rgba(153, 102, 255, 0.6)',
+          ],
+          borderColor: [
+            'rgba(54, 162, 235, 1)',
+            'rgba(255, 99, 132, 1)',
+            'rgba(255, 206, 86, 1)',
+            'rgba(75, 192, 192, 1)',
+            'rgba(153, 102, 255, 1)',
+          ],
+          borderWidth: 1,
+        }]
+      };
+
+      return (
+        <div className={`chart-section ${isVisible ? 'hidden' : ''}`}>
+          <div className="chart-section-header">
+            <h3>{config.title}</h3>
+            <div className="switch-container">
+              <span className="switch-label">Hide</span>
+              <label className="switch">
+                <input
+                  type="checkbox"
+                  checked={isVisible}
+                  onChange={onVisibilityChange}
+                />
+                <span className="slider"></span>
+              </label>
+            </div>
+          </div>
+          <div className="chart-section-content">
+            <div className="chart-card">
+              <ChartRenderer
+                type={config.chartType}
+                data={chartData}
+                options={config.options}
+              />
+            </div>
+            <div className="data-table">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Urgency Level</th>
+                    <th>Count</th>
+                    <th>Percentage</th>
+                    <th>Year to Date</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredData.map(item => (
+                    <tr key={item.key}>
+                      <td>{item.key}</td>
+                      <td>{item.count}</td>
+                      <td>{item.percentage}</td>
+                      <td>{item.ytd}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      );
+    }
+  }
+
+  // For cases opened section, we need to handle the XML structure
+  if (config.name === 'casesOpened' && xmlData) {
+    const filteredData = xmlData
+      .filter((item: TableItem) => item.Detail_Collection?.Detail)
+      .map((item: TableItem) => ({
+        key: item.Detail_Collection.Detail.Optionskey as string,
+        count: parseInt(item.Detail_Collection.Detail.PD_ as string),
+        percentage: item.Detail_Collection.Detail.PTD_ as string,
+        ytd: item.Detail_Collection.Detail.YTD_ as string
+      }))
+      .filter(item => item.count !== 0)
+      .sort((a, b) => b.count - a.count);
+
+    const chartData = {
+      labels: filteredData.map(item => item.key),
+      datasets: [{
+        label: 'Number of Cases',
+        data: filteredData.map(item => item.count),
+        backgroundColor: 'rgba(54, 162, 235, 0.6)',
+        borderColor: 'rgba(54, 162, 235, 1)',
+        borderWidth: 1,
+      }]
+    };
+
+    return (
+      <div className={`chart-section ${isVisible ? 'hidden' : ''}`}>
+        <div className="chart-section-header">
+          <h3>{config.title}</h3>
+          <div className="switch-container">
+            <span className="switch-label">Hide</span>
+            <label className="switch">
+              <input
+                type="checkbox"
+                checked={isVisible}
+                onChange={onVisibilityChange}
+              />
+              <span className="slider"></span>
+            </label>
+          </div>
+        </div>
+        <div className="chart-section-content">
+          <div className="chart-card">
+            <ChartRenderer
+              type={config.chartType}
+              data={chartData}
+              options={config.options}
+            />
+          </div>
+          <div className="data-table">
+            <table>
+              <thead>
+                <tr>
+                  <th>Case Type</th>
+                  <th>Count</th>
+                  <th>Percentage</th>
+                  <th>Year to Date</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filteredData.map(item => (
+                  <tr key={item.key}>
+                    <td>{item.key}</td>
+                    <td>{item.count}</td>
+                    <td>{item.percentage}</td>
+                    <td>{item.ytd}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   // For education section, we need to handle the array of objects format
   if (config.name === 'education' && Array.isArray(sectionData)) {
