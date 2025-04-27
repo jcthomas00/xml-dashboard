@@ -44,6 +44,10 @@ export interface DashboardData {
   priorEAP?: Record<string, { yd: number; ptd: string; ytd: string }>;
   maritalStatus?: Record<string, { yd: number; ptd: string; ytd: string }>;
   ethnicity?: Record<string, { yd: number; ptd: string; ytd: string }>;
+  casesClosed?: {
+    eap: { pd: number; ptd: string; yd: number; ytd: string };
+    worklife: { pd: number; ptd: string; yd: number; ytd: string };
+  };
 }
 
 export const parseXMLData = (xmlString: string): Promise<DashboardData> => {
@@ -89,7 +93,11 @@ export const parseXMLData = (xmlString: string): Promise<DashboardData> => {
           workStatus: {},
           priorEAP: {},
           maritalStatus: {},
-          ethnicity: {}
+          ethnicity: {},
+          casesClosed: {
+            eap: { pd: 0, ptd: '0%', yd: 0, ytd: '0%' },
+            worklife: { pd: 0, ptd: '0%', yd: 0, ytd: '0%' }
+          }
         };
 
         // Parse utilization rate data
@@ -116,12 +124,12 @@ export const parseXMLData = (xmlString: string): Promise<DashboardData> => {
             if (type === 'EAP') {
               data.caseTypes.eap = {
                 pd: parseInt(detail.PD2) || 0,
-                ytd: parseInt(detail.YTD2) || 0
+                ytd: parseInt(detail.PD2) || 0
               };
             } else if (type === 'W/L') {
               data.caseTypes.worklife = {
                 pd: parseInt(detail.PD2) || 0,
-                ytd: parseInt(detail.YTD2) || 0
+                ytd: parseInt(detail.PD2) || 0
               };
             }
           });
@@ -267,7 +275,7 @@ export const parseXMLData = (xmlString: string): Promise<DashboardData> => {
                 label: detail.Textbox13 || '',
                 pd: parseInt(detail.Textbox14 || '0', 10),
                 ptd: detail.Textbox15 || '0%',
-                yd: parseInt(detail.Textbox17 || '0', 10),
+                yd: parseInt(detail.Textbox14 || '0', 10),
                 ytd: detail.Textbox18 || '0%'
               });
             }
@@ -334,7 +342,7 @@ export const parseXMLData = (xmlString: string): Promise<DashboardData> => {
                 : item.Detail_Collection.Detail;
               if (detail.Optionskey !== "Data Not Available") {
                 acc[detail.Optionskey] = {
-                  yd: parseInt(detail.YD_) || 0,
+                  yd: parseInt(detail.PD_) || 0,
                   ptd: detail.PTD_2 || '0%',
                   ytd: detail.YTD_ || '0%'
                 };
@@ -358,7 +366,7 @@ export const parseXMLData = (xmlString: string): Promise<DashboardData> => {
                 : item.Detail_Collection.Detail;
               if (detail.Optionskey !== "Data Not Available") {
                 acc[detail.Optionskey] = {
-                  yd: parseInt(detail.YD_) || 0,
+                  yd: parseInt(detail.PD_) || 0,
                   ptd: detail.PTD_ || '0%',
                   ytd: detail.YTD_ || '0%'
                 };
@@ -382,7 +390,7 @@ export const parseXMLData = (xmlString: string): Promise<DashboardData> => {
                 : item.Detail_Collection.Detail;
               if (detail.Optionskey !== "Data Not Available") {
                 acc[detail.Optionskey] = {
-                  yd: parseInt(detail.YD_) || 0,
+                  yd: parseInt(detail.PD_) || 0,
                   ptd: detail.PTD_ || '0%',
                   ytd: detail.YTD_ || '0%'
                 };
@@ -391,6 +399,36 @@ export const parseXMLData = (xmlString: string): Promise<DashboardData> => {
             return acc;
           }, {});
           data.ethnicity = ethnicityData;
+        }
+
+        // Parse cases closed data
+        if (report.CasesClosed?.Report?.table1?.table1_Optionskey_Collection?.table1_Optionskey) {
+          const options = Array.isArray(report.CasesClosed.Report.table1.table1_Optionskey_Collection.table1_Optionskey)
+            ? report.CasesClosed.Report.table1.table1_Optionskey_Collection.table1_Optionskey
+            : [report.CasesClosed.Report.table1.table1_Optionskey_Collection.table1_Optionskey];
+
+          options.forEach((option: any) => {
+            if (option.Detail_Collection?.Detail) {
+              const detail = Array.isArray(option.Detail_Collection.Detail)
+                ? option.Detail_Collection.Detail[0]
+                : option.Detail_Collection.Detail;
+              if (detail.Optionskey === 'EAP' && data.casesClosed) {
+                data.casesClosed.eap = {
+                  pd: parseInt(detail.PD_) || 0,
+                  ptd: detail.PTD_ || '0%',
+                  yd: parseInt(detail.YD_) || 0,
+                  ytd: detail.YTD_ || '0%'
+                };
+              } else if (detail.Optionskey === 'W/L' && data.casesClosed) {
+                data.casesClosed.worklife = {
+                  pd: parseInt(detail.PD_) || 0,
+                  ptd: detail.PTD_ || '0%',
+                  yd: parseInt(detail.YD_) || 0,
+                  ytd: detail.YTD_ || '0%'
+                };
+              }
+            }
+          });
         }
 
         resolve(data);
